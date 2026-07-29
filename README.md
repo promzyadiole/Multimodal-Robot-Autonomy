@@ -1,9 +1,13 @@
-# 🤖 Language-Vision-Grounded-Robot-Autonomy
+# 🤖 Multimodal-Robot-Autonomy
 
-[![Language-Vision-Grounded Robot Autonomy UI Overview](docs/images/spawned_robot.png)](https://promzyadiole.github.io/Language-Vision-Grounded-Robot-Autonomy/demo/)
+[![Multimodal Robot Autonomy UI Overview](docs/images/spawned_robot.png)](https://promzyadiole.github.io/Language-Vision-Grounded-Robot-Autonomy/demo/)
 
 <p align="center">
   <strong><a href="https://promzyadiole.github.io/Language-Vision-Grounded-Robot-Autonomy/demo/">▶ Watch Demo Video</a></strong>
+</p>
+
+<p align="center">
+  <em>Builds on <a href="https://github.com/promzyadiole/Language-Vision-Grounded-Robot-Autonomy">Language-Vision-Grounded-Robot-Autonomy</a>, extending it to spawn and navigate a custom robot. The demo above is hosted on that project.</em>
 </p>
 
 <p align="center">
@@ -24,7 +28,7 @@
 
 ## 📌 Overview
 
-**Language-Vision-Grounded-Robot-Autonomy** is a modular full-stack robotics system that connects **natural language**, **voice commands**, **vision-language perception**, **ROS 2 navigation**, and a **web-based robot command center** into one integrated framework.
+**Multimodal-Robot-Autonomy** is a modular full-stack robotics system that connects **natural language**, **voice commands**, **vision-language perception**, **ROS 2 navigation**, and a **web-based robot command center** into one integrated framework.
 
 The project combines:
 
@@ -315,7 +319,7 @@ The project includes a semantic small-house navigation configuration grounded fr
 ## 📂 Project Structure
 
 ```text
-Language-Vision-Grounded-Robot-Autonomy/
+Multimodal-Robot-Autonomy/
 ├── backend/
 │   ├── app/
 │   │   ├── main.py
@@ -751,8 +755,8 @@ It can return:
 ### 1. Clone the Repository
 
 ```bash
-git clone git@github.com:promzyadiole/Language-Vision-Grounded-Robot-Autonomy.git
-cd Language-Vision-Grounded-Robot-Autonomy
+git clone git@github.com:promzyadiole/Multimodal-Robot-Autonomy.git
+cd Multimodal-Robot-Autonomy
 ```
 
 ### 2. Backend Setup
