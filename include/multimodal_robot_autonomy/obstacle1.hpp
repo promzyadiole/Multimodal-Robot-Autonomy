@@ -14,8 +14,8 @@
 //
 // Author: Ryan Shim
 
-#ifndef TURTLEBOT3_GAZEBO__OBSTACLE2_HPP_
-#define TURTLEBOT3_GAZEBO__OBSTACLE2_HPP_
+#ifndef MULTIMODAL_ROBOT_AUTONOMY__OBSTACLE1_HPP_
+#define MULTIMODAL_ROBOT_AUTONOMY__OBSTACLE1_HPP_
 
 #include <ignition/math.hh>
 #include <gazebo/common/common.hh>
@@ -24,16 +24,15 @@
 
 namespace gazebo
 {
-class Obstacle2 : public ModelPlugin
+class Obstacle1 : public ModelPlugin
 {
 public:
-  Obstacle2() = default;
   void Load(physics::ModelPtr _parent, sdf::ElementPtr /*_sdf*/) override;
 
 private:
   physics::ModelPtr model;
   event::ConnectionPtr updateConnection;
 };
-GZ_REGISTER_MODEL_PLUGIN(Obstacle2);
+GZ_REGISTER_MODEL_PLUGIN(Obstacle1);
 }  // namespace gazebo
-#endif  // TURTLEBOT3_GAZEBO__OBSTACLE2_HPP_
+#endif  // MULTIMODAL_ROBOT_AUTONOMY__OBSTACLE1_HPP_

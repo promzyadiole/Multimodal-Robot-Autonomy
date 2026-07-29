@@ -14,8 +14,8 @@
 //
 // Author: Ryan Shim
 
-#ifndef TURTLEBOT3_GAZEBO__OBSTACLES_HPP_
-#define TURTLEBOT3_GAZEBO__OBSTACLES_HPP_
+#ifndef MULTIMODAL_ROBOT_AUTONOMY__OBSTACLES_HPP_
+#define MULTIMODAL_ROBOT_AUTONOMY__OBSTACLES_HPP_
 
 #include <ignition/math.hh>
 #include <gazebo/common/common.hh>
@@ -38,4 +38,4 @@ private:
 };
 GZ_REGISTER_MODEL_PLUGIN(Obstacles);
 }  // namespace gazebo
-#endif  // TURTLEBOT3_GAZEBO__OBSTACLES_HPP_
+#endif  // MULTIMODAL_ROBOT_AUTONOMY__OBSTACLES_HPP_

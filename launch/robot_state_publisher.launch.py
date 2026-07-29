@@ -36,7 +36,7 @@ def generate_launch_description():
     print('urdf_file_name : {}'.format(urdf_file_name))
 
     urdf_path = os.path.join(
-        get_package_share_directory('turtlebot3_gazebo'),
+        get_package_share_directory('multimodal_robot_autonomy'),
         'urdf',
         urdf_file_name)
 

@@ -14,7 +14,7 @@
 //
 // Author: Ryan Shim
 
-#include "turtlebot3_gazebo/obstacles.hpp"
+#include "multimodal_robot_autonomy/obstacles.hpp"
 
 namespace gazebo
 {

@@ -14,7 +14,7 @@
 //
 // Author: Hyungyu Kim
 
-#include "turtlebot3_gazebo/traffic_light_plugin.hpp"
+#include "multimodal_robot_autonomy/traffic_light_plugin.hpp"
 
 namespace gazebo
 {

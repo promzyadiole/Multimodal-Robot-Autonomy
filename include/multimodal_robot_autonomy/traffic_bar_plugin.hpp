@@ -14,8 +14,8 @@
 //
 // Author: Hyungyu Kim
 
-#ifndef TURTLEBOT3_GAZEBO__TRAFFIC_BAR_PLUGIN_HPP_
-#define TURTLEBOT3_GAZEBO__TRAFFIC_BAR_PLUGIN_HPP_
+#ifndef MULTIMODAL_ROBOT_AUTONOMY__TRAFFIC_BAR_PLUGIN_HPP_
+#define MULTIMODAL_ROBOT_AUTONOMY__TRAFFIC_BAR_PLUGIN_HPP_
 
 #include <gazebo/gazebo.hh>
 #include <gazebo/physics/physics.hh>
@@ -42,4 +42,4 @@ private:
 };
 GZ_REGISTER_MODEL_PLUGIN(TrafficBar);
 }  // namespace gazebo
-#endif  // TURTLEBOT3_GAZEBO__TRAFFIC_BAR_PLUGIN_HPP_
+#endif  // MULTIMODAL_ROBOT_AUTONOMY__TRAFFIC_BAR_PLUGIN_HPP_

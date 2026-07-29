@@ -14,8 +14,8 @@
 //
 // Authors: Taehun Lim (Darby), Ryan Shim
 
-#ifndef TURTLEBOT3_GAZEBO__TURTLEBOT3_DRIVE_HPP_
-#define TURTLEBOT3_GAZEBO__TURTLEBOT3_DRIVE_HPP_
+#ifndef MULTIMODAL_ROBOT_AUTONOMY__TURTLEBOT3_DRIVE_HPP_
+#define MULTIMODAL_ROBOT_AUTONOMY__TURTLEBOT3_DRIVE_HPP_
 
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Quaternion.h>
@@ -67,4 +67,4 @@ private:
   void scan_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg);
   void odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg);
 };
-#endif  // TURTLEBOT3_GAZEBO__TURTLEBOT3_DRIVE_HPP_
+#endif  // MULTIMODAL_ROBOT_AUTONOMY__TURTLEBOT3_DRIVE_HPP_
