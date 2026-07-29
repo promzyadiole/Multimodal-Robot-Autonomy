@@ -5,13 +5,13 @@ simulation:
   world_name: small_house
   world_path: /home/promise/turtlebot3_ws/src/aws-robomaker-small-house-world/worlds/small_house.world
   house_models_path: /home/promise/turtlebot3_ws/src/aws-robomaker-small-house-world/models
-  turtlebot3_models_path: /home/promise/turtlebot3_ws/install/turtlebot3_gazebo/share/turtlebot3_gazebo/models
+  turtlebot3_models_path: /home/promise/turtlebot3_ws/install/multimodal_robot_autonomy/share/multimodal_robot_autonomy/models
 
 robot:
   model: waffle_pi
   entity_name: turtlebot3
-  sdf_path: /home/promise/turtlebot3_ws/install/turtlebot3_gazebo/share/turtlebot3_gazebo/models/turtlebot3_waffle_pi/model.sdf
-  urdf_path: /home/promise/turtlebot3_ws/src/turtlebot3_gazebo/urdf/turtlebot3_waffle_pi.urdf
+  sdf_path: /home/promise/turtlebot3_ws/install/multimodal_robot_autonomy/share/multimodal_robot_autonomy/models/turtlebot3_waffle_pi/model.sdf
+  urdf_path: /home/promise/Multimodal-Robot-Autonomy/urdf/turtlebot3_waffle_pi.urdf
   spawn_pose:
     x: -3.5
     y: 1.0
@@ -30,4 +30,4 @@ navigation:
       y: 0.1
       yaw: 0.03
 
-places_file: /home/promise/turtlebot3_ws/src/turtlebot3_gazebo/backend/app/data/places/small_house_places.yaml
+places_file: /home/promise/Multimodal-Robot-Autonomy/backend/app/data/places/small_house_places.yaml

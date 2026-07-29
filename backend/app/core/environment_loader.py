@@ -20,8 +20,13 @@ def load_yaml_file(path: str | Path) -> dict[str, Any]:
     return data
 
 
+DEFAULT_ENVIRONMENT_CONFIG = (
+    Path(__file__).resolve().parents[1] / "data" / "environments" / "small_house.yaml"
+)
+
+
 def load_environment_config(
-    path: str | Path = "~/turtlebot3_ws/src/turtlebot3_gazebo/backend/app/data/environments/small_house.yaml",
+    path: str | Path = DEFAULT_ENVIRONMENT_CONFIG,
 ) -> dict[str, Any]:
     return load_yaml_file(path)
 
