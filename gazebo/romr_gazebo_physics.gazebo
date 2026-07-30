@@ -7,61 +7,70 @@
   that drags. At mu=1.0 against drive wheels at mu=1000 the robot fought itself
   on every turn and jammed against furniture repeatedly (48 wedge events in a
   5-minute mapping run, with actual velocity ~0 while cmd_vel commanded a turn).
-  A frictionless skid is the standard way to model a fixed caster in Gazebo.
+  A low-friction skid is the right model. Note mu=0.0 with slip is too far:
+  the robot then slides and yaws on its own while stationary (measured 21 deg
+  of spontaneous rotation), which AMCL never sees because the wheel encoders
+  report no motion, so localization silently goes stale.
 -->
-<xacro:property name="caster_friction" value="0.0" />
+<xacro:property name="caster_friction" value="0.2" />
 <xacro:property name="wheels_friction" value="1000.0" />
 
+<!--
+  selfCollide was true on the body and both wheels. The base_link mesh spans
+  y +/-0.173 and the wheels mount at y +/-0.185, so their collision geometry
+  interpenetrates and ODE generates continuous contact forces between parts of
+  the same rigid robot. That pushed the robot around while it was idle: it slid
+  ~0.5 m and yawed 20 deg with no command, which AMCL cannot see because the
+  wheel encoders report nothing, so localization silently went stale.
+-->
 <gazebo reference="base_link">
   <mu1>${standard_friction}</mu1>
   <mu2>${standard_friction}</mu2>
-  <selfCollide>true</selfCollide>
+  <selfCollide>false</selfCollide>
   <gravity>true</gravity>
 </gazebo>
 
 <gazebo reference="rightwheel_link">
   <mu1>${wheels_friction}</mu1>
   <mu2>${wheels_friction}</mu2>
-  <selfCollide>true</selfCollide>
+  <selfCollide>false</selfCollide>
 </gazebo>
 
 <gazebo reference="leftwheel_link">
   <mu1>${wheels_friction}</mu1>
   <mu2>${wheels_friction}</mu2>
-  <selfCollide>true</selfCollide>
+  <selfCollide>false</selfCollide>
 </gazebo>
 
 <gazebo reference="casterwheel_link">
   <mu1>${caster_friction}</mu1>
   <mu2>${caster_friction}</mu2>
-  <slip1>1.0</slip1>
-  <slip2>1.0</slip2>
   <selfCollide>false</selfCollide>
 </gazebo>
 
 <gazebo reference="lidar_link">
   <mu1>${standard_friction}</mu1>
   <mu2>${standard_friction}</mu2>
-  <selfCollide>true</selfCollide>
+  <selfCollide>false</selfCollide>
 </gazebo>
 
 <gazebo reference="camerad435i_link">
   <mu1>${standard_friction}</mu1>
   <mu2>${standard_friction}</mu2>
-  <selfCollide>true</selfCollide>
+  <selfCollide>false</selfCollide>
 </gazebo>
 
 <gazebo reference="camerat265_link">
   <mu1>${standard_friction}</mu1>
   <mu2>${standard_friction}</mu2>
-  <selfCollide>true</selfCollide>
+  <selfCollide>false</selfCollide>
 </gazebo>
 
 
 <gazebo reference="imu_link">
   <mu1>${standard_friction}</mu1>
   <mu2>${standard_friction}</mu2>
-  <selfCollide>true</selfCollide>
+  <selfCollide>false</selfCollide>
 </gazebo>
 
 </robot>
