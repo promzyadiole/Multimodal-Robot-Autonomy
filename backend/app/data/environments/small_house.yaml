@@ -3,7 +3,7 @@ description: AWS RoboMaker small house mapped environment for the ROMR custom ro
 
 simulation:
   world_name: small_house
-  world_path: /home/promise/Multimodal-Robot-Autonomy/worlds/small_house.world
+  world_path: /home/promise/turtlebot3_ws/src/aws-robomaker-small-house-world/worlds/small_house.world
   house_models_path: /home/promise/turtlebot3_ws/src/aws-robomaker-small-house-world/models
   robot_models_path: /home/promise/turtlebot3_ws/install/multimodal_robot_autonomy/share/multimodal_robot_autonomy/models
 

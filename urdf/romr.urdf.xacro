@@ -215,7 +215,14 @@
     </collision>
   </link>
   <joint name="camerad435i_joint" type="fixed">
-    <origin xyz="-0.20718 -0.08268 0.17016" rpy="0 0 0" />
+    <!--
+      Mounted on the front face of the chassis. The upstream pose put this at
+      x=-0.20718, inside the body (base_link spans x=[-0.229, +0.271]), so the
+      camera rendered nothing but the inside of its own hull. base_link +X is
+      forward, confirmed by odometry, and the sensor has no <pose> override, so
+      it looks straight down the length of the robot from wherever it sits.
+    -->
+    <origin xyz="0.28 0 0.17016" rpy="0 0 0" />
     <parent  link="base_link" />
     <child link="camerad435i_link" />
     <axis xyz="0 0 0" />

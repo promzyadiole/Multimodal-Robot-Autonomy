@@ -17,8 +17,10 @@ def generate_launch_description():
     house_models = os.path.join(small_house_repo, "models")
     turtlebot3_models = os.path.join(pkg_share, "models")
 
+    # The house geometry lives in the AWS checkout, so the world stays external:
+    # this package's worlds/romr_empty.world is only sun + ground plane.
     small_house_world = os.path.join(
-        pkg_share,
+        small_house_repo,
         "worlds",
         "small_house.world",
     )
