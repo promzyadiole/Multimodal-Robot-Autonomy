@@ -28,4 +28,4 @@ pkill -9 -f nav2 || true
 # gazebo_romr.launch.py brings up Gazebo, robot_state_publisher and the spawn.
 gnome-terminal -- bash -lc "source /opt/ros/humble/setup.bash; source ~/turtlebot3_ws/install/setup.bash; export CYCLONEDDS_URI=$CYCLONEDDS_URI; export ROS_DOMAIN_ID=$ROS_DOMAIN_ID; export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH; ros2 launch multimodal_robot_autonomy gazebo_romr.launch.py; exec bash"
 
-gnome-terminal -- bash -lc "sleep 10; source /opt/ros/humble/setup.bash; source ~/turtlebot3_ws/install/setup.bash; ros2 launch multimodal_robot_autonomy nav2_romr.launch.py; exec bash"
+gnome-terminal -- bash -lc "sleep 10; source /opt/ros/humble/setup.bash; source ~/turtlebot3_ws/install/setup.bash; export CYCLONEDDS_URI=$CYCLONEDDS_URI; export ROS_DOMAIN_ID=$ROS_DOMAIN_ID; ros2 launch multimodal_robot_autonomy nav2_romr.launch.py; exec bash"
