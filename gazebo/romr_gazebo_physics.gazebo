@@ -2,7 +2,14 @@
 <robot name="romr_ros" xmlns:xacro="http://www.ros.org/wiki/xacro" >
 
 <xacro:property name="standard_friction" value="1.0" />
-<xacro:property name="caster_friction" value="1.0" />
+<!--
+  casterwheel_joint is a FIXED joint, so the caster never rolls; it is a skid
+  that drags. At mu=1.0 against drive wheels at mu=1000 the robot fought itself
+  on every turn and jammed against furniture repeatedly (48 wedge events in a
+  5-minute mapping run, with actual velocity ~0 while cmd_vel commanded a turn).
+  A frictionless skid is the standard way to model a fixed caster in Gazebo.
+-->
+<xacro:property name="caster_friction" value="0.0" />
 <xacro:property name="wheels_friction" value="1000.0" />
 
 <gazebo reference="base_link">
@@ -27,7 +34,9 @@
 <gazebo reference="casterwheel_link">
   <mu1>${caster_friction}</mu1>
   <mu2>${caster_friction}</mu2>
-  <selfCollide>true</selfCollide>
+  <slip1>1.0</slip1>
+  <slip2>1.0</slip2>
+  <selfCollide>false</selfCollide>
 </gazebo>
 
 <gazebo reference="lidar_link">
