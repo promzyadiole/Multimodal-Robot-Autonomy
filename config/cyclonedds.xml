@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Keeps the whole simulation stack on loopback.
+
+  Two problems this solves, both seen as nav2 goals aborting while Gazebo
+  looked healthy:
+
+  1. This host has no multicast route (and lo has no MULTICAST flag), so
+     Cyclone's default discovery to 239.255.0.1:7400 fails with
+     "Network is unreachable" and participants never exchange data reliably.
+  2. ROS_DOMAIN_ID defaults to 0 on a shared subnet, so this machine was
+     discovering another host's ROS graph (10.83.3.22) and trying to push
+     traffic to it.
+
+  Unicast discovery against localhost avoids both without needing root to
+  add a multicast route. Point CYCLONEDDS_URI at this file.
+-->
+<CycloneDDS xmlns="https://cdds.io/config">
+  <Domain id="any">
+    <General>
+      <Interfaces>
+        <NetworkInterface address="127.0.0.1" multicast="false"/>
+      </Interfaces>
+      <AllowMulticast>false</AllowMulticast>
+      <EnableMulticastLoopback>false</EnableMulticastLoopback>
+    </General>
+    <Discovery>
+      <ParticipantIndex>auto</ParticipantIndex>
+      <MaxAutoParticipantIndex>100</MaxAutoParticipantIndex>
+      <Peers>
+        <Peer address="localhost"/>
+      </Peers>
+    </Discovery>
+  </Domain>
+</CycloneDDS>
