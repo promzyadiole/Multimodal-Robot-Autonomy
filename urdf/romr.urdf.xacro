@@ -216,13 +216,20 @@
   </link>
   <joint name="camerad435i_joint" type="fixed">
     <!--
-      Mounted on the front face of the chassis. The upstream pose put this at
-      x=-0.20718, inside the body (base_link spans x=[-0.229, +0.271]), so the
-      camera rendered nothing but the inside of its own hull. base_link +X is
-      forward, confirmed by odometry, and the sensor has no <pose> override, so
-      it looks straight down the length of the robot from wherever it sits.
+      Mounted flush on the front face of the basket rim, which is the hull's
+      forward-most surface at this height (x=+0.2308 for z in 0.20..0.25).
+      Do not derive this from the mesh's overall bounding box: at the camera's
+      own height on the centreline the hull ends at x=-0.185, because z~0.17 is
+      the open gap between the lower deck and the basket, so a pose picked from
+      the global max (x=+0.271, which comes from the caster mount low down)
+      leaves the camera floating unattached in front of the robot.
+
+      The upstream pose put this at x=-0.20718, inside the body, so the camera
+      rendered nothing but the inside of its own hull. base_link +X is forward,
+      confirmed by odometry, and the sensor has no <pose> override, so it looks
+      straight down the length of the robot from wherever it sits.
     -->
-    <origin xyz="0.28 0 0.17016" rpy="0 0 0" />
+    <origin xyz="0.235 0 0.21" rpy="0 0 0" />
     <parent  link="base_link" />
     <child link="camerad435i_link" />
     <axis xyz="0 0 0" />
