@@ -4,7 +4,8 @@
   <name>multimodal_robot_autonomy</name>
   <version>2.3.8</version>
   <description>
-    Gazebo simulation package for the TurtleBot3
+    Gazebo simulation package for multimodal robot autonomy: the ROMR custom
+    robot plus the TurtleBot3 models it was derived from.
   </description>
   <maintainer email="pyo@robotis.com">Pyo</maintainer>
   <license>Apache 2.0</license>
@@ -22,6 +23,9 @@
   <depend>rclcpp</depend>
   <depend>sensor_msgs</depend>
   <depend>tf2</depend>
+  <depend>xacro</depend>
+  <depend>robot_state_publisher</depend>
+  <exec_depend>nav2_bringup</exec_depend>
   <export>
     <build_type>ament_cmake</build_type>
     <gazebo_ros gazebo_model_path="${prefix}/models"/>

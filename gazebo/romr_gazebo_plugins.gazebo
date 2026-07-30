@@ -1,0 +1,159 @@
+<?xml version="1.0" ?>
+<robot name="multimodal_robot_autonomy" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ========================================================= -->
+  <!-- ROMR Differential Drive Plugin - ROS 2 Gazebo Classic      -->
+  <!-- Publishes: /odom                                           -->
+  <!-- Subscribes: /cmd_vel                                       -->
+  <!-- Frames: odom -> base_link                                  -->
+  <!-- ========================================================= -->
+
+  <gazebo>
+    <plugin name="romr_diff_drive" filename="libgazebo_ros_diff_drive.so">
+
+      <ros>
+        <namespace>/</namespace>
+      </ros>
+
+      <update_rate>50</update_rate>
+
+      <left_joint>rightwheel_joint</left_joint>
+      <right_joint>leftwheel_joint</right_joint>
+
+      <wheel_separation>0.30</wheel_separation>
+      <wheel_diameter>0.1610</wheel_diameter>
+
+      <max_wheel_torque>20</max_wheel_torque>
+      <max_wheel_acceleration>1.0</max_wheel_acceleration>
+
+      <command_topic>cmd_vel</command_topic>
+      <odometry_topic>odom</odometry_topic>
+
+      <odometry_frame>odom</odometry_frame>
+      <robot_base_frame>base_link</robot_base_frame>
+
+      <publish_odom>true</publish_odom>
+      <publish_odom_tf>true</publish_odom_tf>
+      <publish_wheel_tf>false</publish_wheel_tf>
+      <publish_wheel_joint_state>true</publish_wheel_joint_state>
+
+    </plugin>
+  </gazebo>
+
+  <!-- ========================================================= -->
+  <!-- ROMR RPLidar A2 - ROS 2 Gazebo Ray Sensor                  -->
+  <!-- Publishes: /scan                                           -->
+  <!-- Frame: lidar_link                                          -->
+  <!-- ========================================================= -->
+
+  <gazebo reference="lidar_link">
+    <sensor name="rplidar_a2" type="ray">
+
+      <always_on>true</always_on>
+      <visualize>false</visualize>
+      <update_rate>10</update_rate>
+
+      <pose>0 0 0 0 0 0</pose>
+
+      <ray>
+        <scan>
+          <horizontal>
+            <samples>720</samples>
+            <resolution>1</resolution>
+            <min_angle>-3.14159</min_angle>
+            <max_angle>3.14159</max_angle>
+          </horizontal>
+        </scan>
+
+        <range>
+          <min>0.15</min>
+          <max>16.0</max>
+          <resolution>0.1</resolution>
+        </range>
+
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean>
+          <stddev>0.01</stddev>
+        </noise>
+      </ray>
+
+      <plugin name="romr_lidar_plugin" filename="libgazebo_ros_ray_sensor.so">
+        <ros>
+          <namespace>/</namespace>
+          <remapping>~/out:=scan</remapping>
+        </ros>
+
+        <output_type>sensor_msgs/LaserScan</output_type>
+        <frame_name>lidar_link</frame_name>
+      </plugin>
+
+    </sensor>
+  </gazebo>
+
+  <!-- ========================================================= -->
+  <!-- ROMR IMU Sensor - ROS 2 Gazebo IMU Plugin                  -->
+  <!-- Publishes: /imu                                            -->
+  <!-- Frame: imu_link                                            -->
+  <!-- ========================================================= -->
+
+  <gazebo reference="imu_link">
+    <gravity>true</gravity>
+
+    <sensor name="imu_sensor" type="imu">
+      <always_on>true</always_on>
+      <update_rate>50</update_rate>
+      <visualize>true</visualize>
+
+      <plugin name="romr_imu_plugin" filename="libgazebo_ros_imu_sensor.so">
+        <ros>
+          <namespace>/</namespace>
+          <remapping>~/out:=imu</remapping>
+        </ros>
+
+        <frame_name>imu_link</frame_name>
+        <initial_orientation_as_reference>false</initial_orientation_as_reference>
+      </plugin>
+
+    </sensor>
+  </gazebo>
+
+  <!-- ========================================================= -->
+  <!-- Optional RGB camera placeholder                            -->
+  <!-- Keep this simple first. Depth camera can be added later.    -->
+  <!-- Publishes under: /camera                                   -->
+  <!-- ========================================================= -->
+
+  <gazebo reference="camerad435i_link">
+    <sensor name="romr_rgb_camera" type="camera">
+
+      <always_on>true</always_on>
+      <visualize>true</visualize>
+      <update_rate>15</update_rate>
+
+      <camera>
+        <horizontal_fov>1.20428</horizontal_fov>
+        <image>
+          <width>640</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.02</near>
+          <far>30.0</far>
+        </clip>
+      </camera>
+
+      <plugin name="romr_rgb_camera_plugin" filename="libgazebo_ros_camera.so">
+        <ros>
+          <namespace>/camera</namespace>
+        </ros>
+
+        <camera_name>romr_camera</camera_name>
+        <frame_name>camerad435i_link</frame_name>
+      </plugin>
+
+    </sensor>
+  </gazebo>
+
+</robot>

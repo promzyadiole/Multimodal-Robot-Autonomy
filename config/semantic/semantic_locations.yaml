@@ -1,0 +1,62 @@
+places:
+  start:
+    x: -3.5
+    y: 1.0
+    yaw: 0.02
+    aliases:
+      - start
+      - home
+      - base
+      - initial position
+      - return to base
+
+  living_room:
+    x: -3.0
+    y: 0.9
+    yaw: 0.0
+    aliases:
+      - living room
+      - lounge
+      - sitting room
+
+  hallway:
+    x: -2.3
+    y: 0.0
+    yaw: 0.0
+    aliases:
+      - hallway
+      - corridor
+
+  kitchen:
+    x: -1.5
+    y: 2.0
+    yaw: 0.0
+    aliases:
+      - kitchen
+      - cooking area
+
+  dining_area:
+    x: -0.5
+    y: 1.0
+    yaw: 0.0
+    aliases:
+      - dining area
+      - dining room
+      - table area
+
+  bedroom:
+    x: 1.0
+    y: -1.5
+    yaw: 0.0
+    aliases:
+      - bedroom
+      - sleeping room
+
+  bathroom:
+    x: 2.0
+    y: 0.5
+    yaw: 0.0
+    aliases:
+      - bathroom
+      - toilet
+      - restroom
