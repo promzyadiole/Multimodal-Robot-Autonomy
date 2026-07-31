@@ -75,8 +75,17 @@
           </horizontal>
         </scan>
 
+        <!--
+          min was 0.15, but lidar_link sits at z=+0.1233 while the cart body
+          spans z=-0.091..+0.287, so the scan plane cuts through ROMR's own
+          chassis: 56 of 720 beams returned hits on the robot itself at
+          0.167..0.311 m. Those phantom returns ring the robot in the local
+          costmap and make nav2 believe it is permanently boxed in.
+          0.33 is ROMR's circumscribed radius, so anything nearer than this is
+          already touching the chassis and cannot be a useful obstacle.
+        -->
         <range>
-          <min>0.15</min>
+          <min>0.33</min>
           <max>16.0</max>
           <resolution>0.1</resolution>
         </range>
