@@ -114,20 +114,19 @@ controller_server:
       debug_trajectory_details: false
       min_vel_x: 0.0
       min_vel_y: 0.0
-      # ROMR is a tall cart on a short wheelbase: the drive wheels sit at
-      # x=-0.124 and the caster at +0.250, so the support polygon is short
-      # front-to-back while the body reaches z=0.287. It has tipped onto its
-      # side twice on contact with door frames. Lower approach speed and
-      # gentler acceleration reduce the impulse that rolls it.
-      max_vel_x: 0.22
+      # Restored to 0.35 once the tipping was fixed at its source: ROMR had no
+      # rear caster, so it pivoted nose-up about the wheel axle on contact.
+      # With one added, the tip rig measures 10.5 deg of pitch here (was 50.2
+      # and over) and it stays upright even at 0.45.
+      max_vel_x: 0.35
       max_vel_y: 0.0
       max_vel_theta: 1.0
       min_speed_xy: 0.0
-      max_speed_xy: 0.22
+      max_speed_xy: 0.35
       min_speed_theta: 0.0
-      acc_lim_x: 0.8
+      acc_lim_x: 1.5
       acc_lim_y: 0.0
-      acc_lim_theta: 1.2
+      acc_lim_theta: 2.0
       decel_lim_x: -1.5
       decel_lim_y: 0.0
       decel_lim_theta: -2.0

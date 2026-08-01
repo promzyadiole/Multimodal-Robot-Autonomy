@@ -146,6 +146,45 @@
     <axis xyz="0 0 0" />
   </joint>
   
+  <!--
+    Rear caster. ROMR shipped with a single caster at the FRONT (x=+0.250), so
+    the rearmost ground contact was the wheel axle at x=-0.124 and the centre of
+    mass sat only 0.0865 m ahead of it: a 24.1 deg rear tipping margin. Striking
+    a door frame asymmetrically pivoted the robot nose-up about that axle and
+    over; measured 50.2 deg of pitch at 0.35 m/s in the tip rig, with only
+    7.4 deg of roll, so it went over backwards rather than sideways.
+    Placing a second caster at x=-0.20 (inside the body, which reaches -0.229)
+    extends the support polygon rearward and raises that margin to 40.0 deg.
+    z matches the front caster so both touch the wheels' ground plane.
+  -->
+  <link name="rearcaster_link">
+    <inertial>
+      <origin xyz="-0.0032546 0.0053327 0.013127" rpy="0 0 0" />
+      <mass value="0.10255" />
+      <inertia ixx="9.4829E-05" ixy="-2.3412E-06" ixz="1.3145E-05" iyy="0.00012884" iyz="8.5135E-07" izz="5.2207E-05" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://multimodal_robot_autonomy/meshes/casterwheel.STL" />
+      </geometry>
+      <material name="blue">
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://multimodal_robot_autonomy/meshes/casterwheel.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="rearcaster_joint" type="fixed">
+    <origin xyz="-0.20 0.0 -0.0948" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="rearcaster_link" />
+    <axis xyz="0 0 0" />
+  </joint>
+
   <link name="lidar_link">
     <inertial>
       <origin xyz="0.00050486 -3.7855E-05 -0.025753" rpy="0 0 0" />
