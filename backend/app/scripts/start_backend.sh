@@ -28,10 +28,24 @@ export GAZEBO_MASTER_URI=${GAZEBO_MASTER_URI:-http://127.0.0.1:11345}
 source /opt/ros/humble/setup.bash
 source ~/turtlebot3_ws/install/setup.bash
 
-# The default HF cache points at an unwritable /mnt/windows path on this host.
-export HF_HOME=${HF_HOME:-$HOME/.cache/huggingface}
+# ~/.bashrc points HF_HOME, HUGGINGFACE_HUB_CACHE and TRANSFORMERS_CACHE at
+# /mnt/windows/huggingface_cache, which is root-owned here, so open_clip fails
+# with "I/O error: Permission denied (os error 13)". All three must be
+# redirected -- overriding only HF_HOME leaves the hub cache broken.
+export HF_HOME=$HOME/.cache/huggingface
+export HUGGINGFACE_HUB_CACHE=$HF_HOME/hub
+export HF_HUB_CACHE=$HF_HOME/hub
 export TRANSFORMERS_CACHE=$HF_HOME
-mkdir -p "$HF_HOME"
+mkdir -p "$HF_HOME/hub"
+
+# ~/.bashrc exports SAM_MODEL_TYPE=vit_h and SAM_CHECKPOINT for a different
+# project, pointing at /mnt/windows which is not mounted here. Process env beats
+# .env in pydantic-settings, so those would override backend/.env and the
+# perceptor then refuses to start:
+#   "SAM model mismatch: checkpoint 'sam_vit_b_01ec64.pth' requires
+#    SAM_MODEL_TYPE=vit_b, but got 'vit_h'"
+# Clear them so this project's .env is authoritative. ~/.bashrc is left alone.
+unset SAM_MODEL_TYPE SAM_CHECKPOINT
 
 # Which environment the command center serves: new_world (default) or small_house.
 export MRA_ENVIRONMENT=${MRA_ENVIRONMENT:-new_world}

@@ -1,110 +1,161 @@
+# Places here MUST match app/data/places/<environment>_places.yaml.
+# Two registries feed different paths: /api/navigation resolves places via the
+# environment config, while the chat/action-mapper path reads this file. They
+# disagreed once and a chat command sent the robot to (10.94, -2.04) -- an
+# AWS small-house pose, far outside the new_world map.
+# Regenerate from the environment places file when the environment changes.
+
 places:
-  dining:
-    aliases: ["dining", "dining room", "dining area"]
+  parlour:
+    aliases:
+    - parlour
+    - living room
+    - lounge
+    - sitting room
     pose:
-      x: 8.941754097318045
-      y: 0.018029767058794003
-      yaw: -1.102221
-
+      x: -5.9101
+      y: -3.3416
+      yaw: -1.57239
   kitchen:
-    aliases: ["kitchen"]
+    aliases:
+    - kitchen
     pose:
-      x: 10.944720631741301
-      y: -2.0366559182181296
-      yaw: -0.198510
-
-  sitting_room:
-    aliases: ["sitting room", "parlour", "living room", "lounge"]
+      x: -8.9101
+      y: -4.3416
+      yaw: -1.57239
+  dining_room:
+    aliases:
+    - dining room
+    - dining area
     pose:
-      x: 4.584935370932155
-      y: -1.732426717936883
-      yaw: -1.976274
-
-  gym_room:
-    aliases: ["gym room", "gym", "fitness room"]
+      x: -8.9101
+      y: 7.6584
+      yaw: 3.140797
+    metadata:
+      capture_on_arrival: true
+  master_bedroom:
+    aliases:
+    - master bedroom
+    - bedroom
     pose:
-      x: 5.362603231972828
-      y: 1.7521013027719252
-      yaw: 0.223523
-
-  bedroom:
-    aliases: ["bedroom", "master bedroom"]
+      x: -2.9101
+      y: 7.6584
+      yaw: 3.140797
+  garage:
+    aliases:
+    - garage
     pose:
-      x: -2.566750913179668
-      y: -0.789164807151224
-      yaw: 1.859690
-
-  study_room:
-    aliases: ["study room", "study", "study area", "office"]
+      x: -0.4101
+      y: 2.8584
+      yaw: 0.000796
+    metadata:
+      capture_on_arrival: true
+  store_area:
+    aliases:
+    - store area
+    - store
+    - storage
     pose:
-      x: -3.939945075025824
-      y: -0.1851448674441512
-      yaw: 2.475448
-
-  visitors_room:
-    aliases: ["visitor room", "visitors room", "guest room"]
-    pose:
-      x: -3.0746712415245443
-      y: -3.774420758500321
-      yaw: 1.469622
-
+      x: -0.4101
+      y: -3.3416
+      yaw: -1.57239
+    metadata:
+      capture_on_arrival: true
   home:
-    aliases: ["home", "start", "origin", "base"]
+    aliases:
+    - home
+    - start
+    - origin
+    - base
     pose:
-      x: 0.0604
-      y: -0.0568
-      yaw: -0.0006
-
+      x: -5.8533
+      y: -0.2812
+      yaw: 1.570197
 routes:
   patrol_route:
     type: waypoint_sequence
     points:
-      - {x: 4.584935370932155, y: -1.732426717936883, yaw: -1.976274, label: "sitting_room"}
-      - {x: 10.944720631741301, y: -2.0366559182181296, yaw: -0.198510, label: "kitchen"}
-      - {x: 8.941754097318045, y: 0.018029767058794003, yaw: -1.102221, label: "dining"}
-      - {x: 5.362603231972828, y: 1.7521013027719252, yaw: 0.223523, label: "gym_room"}
-      - {x: -2.566750913179668, y: -0.789164807151224, yaw: 1.859690, label: "bedroom"}
-      - {x: -3.939945075025824, y: -0.1851448674441512, yaw: 2.475448, label: "study_room"}
-      - {x: -3.0746712415245443, y: -3.774420758500321, yaw: 1.469622, label: "visitors_room"}
-
+    - x: 4.584935370932155
+      y: -1.732426717936883
+      yaw: -1.976274
+      label: sitting_room
+    - x: 10.944720631741301
+      y: -2.0366559182181296
+      yaw: -0.19851
+      label: kitchen
+    - x: 8.941754097318045
+      y: 0.018029767058794003
+      yaw: -1.102221
+      label: dining
+    - x: 5.362603231972828
+      y: 1.7521013027719252
+      yaw: 0.223523
+      label: gym_room
+    - x: -2.566750913179668
+      y: -0.789164807151224
+      yaw: 1.85969
+      label: bedroom
+    - x: -3.939945075025824
+      y: -0.1851448674441512
+      yaw: 2.475448
+      label: study_room
+    - x: -3.0746712415245443
+      y: -3.774420758500321
+      yaw: 1.469622
+      label: visitors_room
 motions:
   move_forward:
-    aliases: ["move forward", "go forward", "forward"]
+    aliases:
+    - move forward
+    - go forward
+    - forward
     cmd_vel:
-      linear_x: 0.20
+      linear_x: 0.2
       angular_z: 0.0
       duration_sec: 2.0
-
   move_backward:
-    aliases: ["move backward", "go backward", "reverse", "backward"]
+    aliases:
+    - move backward
+    - go backward
+    - reverse
+    - backward
     cmd_vel:
-      linear_x: -0.20
+      linear_x: -0.2
       angular_z: 0.0
       duration_sec: 2.0
-
   turn_left:
-    aliases: ["turn left", "go left", "left"]
+    aliases:
+    - turn left
+    - go left
+    - left
     cmd_vel:
       linear_x: 0.0
       angular_z: 0.6
       duration_sec: 1.5
-
   turn_right:
-    aliases: ["turn right", "go right", "right"]
+    aliases:
+    - turn right
+    - go right
+    - right
     cmd_vel:
       linear_x: 0.0
       angular_z: -0.6
       duration_sec: 1.5
-
   rotate:
-    aliases: ["rotate", "spin", "turn around", "rotate in place"]
+    aliases:
+    - rotate
+    - spin
+    - turn around
+    - rotate in place
     cmd_vel:
       linear_x: 0.0
       angular_z: 0.8
       duration_sec: 3.5
-
   stop:
-    aliases: ["stop", "halt", "freeze"]
+    aliases:
+    - stop
+    - halt
+    - freeze
     cmd_vel:
       linear_x: 0.0
       angular_z: 0.0
