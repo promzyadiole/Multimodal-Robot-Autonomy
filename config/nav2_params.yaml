@@ -114,15 +114,20 @@ controller_server:
       debug_trajectory_details: false
       min_vel_x: 0.0
       min_vel_y: 0.0
-      max_vel_x: 0.35
+      # ROMR is a tall cart on a short wheelbase: the drive wheels sit at
+      # x=-0.124 and the caster at +0.250, so the support polygon is short
+      # front-to-back while the body reaches z=0.287. It has tipped onto its
+      # side twice on contact with door frames. Lower approach speed and
+      # gentler acceleration reduce the impulse that rolls it.
+      max_vel_x: 0.22
       max_vel_y: 0.0
       max_vel_theta: 1.0
       min_speed_xy: 0.0
-      max_speed_xy: 0.35
+      max_speed_xy: 0.22
       min_speed_theta: 0.0
-      acc_lim_x: 1.5
+      acc_lim_x: 0.8
       acc_lim_y: 0.0
-      acc_lim_theta: 2.0
+      acc_lim_theta: 1.2
       decel_lim_x: -1.5
       decel_lim_y: 0.0
       decel_lim_theta: -2.0
@@ -187,9 +192,17 @@ local_costmap:
           clearing: true
           marking: true
           data_type: "LaserScan"
-          raytrace_max_range: 8.0
+          # Mark near, clear far. Marking out to 7.5 m meant small AMCL yaw
+          # errors placed distant wall returns a few cells off the true wall,
+          # leaving thin "ghost walls" beside real ones. They accumulated until
+          # doorways pinched shut and the planner boxed the robot in -- 2332
+          # lethal cells, 41% of the live costmap, were marks with no
+          # counterpart in the map, almost all of them wall-parallel lines.
+          # Marking only within 3 m keeps returns where localisation error is
+          # small; raytracing to 10 m still clears stale marks at a distance.
+          raytrace_max_range: 10.0
           raytrace_min_range: 0.12
-          obstacle_max_range: 7.5
+          obstacle_max_range: 3.0
           obstacle_min_range: 0.12
 
       inflation_layer:
@@ -232,9 +245,17 @@ global_costmap:
           clearing: true
           marking: true
           data_type: "LaserScan"
-          raytrace_max_range: 8.0
+          # Mark near, clear far. Marking out to 7.5 m meant small AMCL yaw
+          # errors placed distant wall returns a few cells off the true wall,
+          # leaving thin "ghost walls" beside real ones. They accumulated until
+          # doorways pinched shut and the planner boxed the robot in -- 2332
+          # lethal cells, 41% of the live costmap, were marks with no
+          # counterpart in the map, almost all of them wall-parallel lines.
+          # Marking only within 3 m keeps returns where localisation error is
+          # small; raytracing to 10 m still clears stale marks at a distance.
+          raytrace_max_range: 10.0
           raytrace_min_range: 0.12
-          obstacle_max_range: 7.5
+          obstacle_max_range: 3.0
           obstacle_min_range: 0.12
 
       inflation_layer:
