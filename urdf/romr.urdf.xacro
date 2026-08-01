@@ -168,7 +168,15 @@
     </collision>
   </link>
   <joint name="lidar_joint" type="fixed">
-    <origin xyz="0.00082049 0.00875 0.12332" rpy="0 0 0" />
+    <!--
+      z was 0.12332, which put the scan plane INSIDE the cart: the base_link
+      mesh spans z -0.091..+0.287, so 56 of 720 beams hit the robot itself.
+      Raised to 0.30, just above the basket rim, so the scanner has a clear
+      360 view and can keep its true 0.15 m minimum range. Blinding the sensor
+      below 0.33 instead let obstacles vanish once they got close, and the
+      controller then drove into them.
+    -->
+    <origin xyz="0.00082049 0.00875 0.30" rpy="0 0 0" />
     <parent link="base_link" />
     <child link="lidar_link" />
     <axis xyz="0 0 1" />
