@@ -49,8 +49,9 @@ frontend/node_modules/
 Profile.pdf
 thesis/
 
-# source copy of the public portrait; frontend/public/profile.png is the served one
-Promise-Adiole.png
+# source copy of the public portrait, repo root only
+/Promise-Adiole.png
 
-# source copy of the RViz still; frontend/public/rviz_romr.png is the served one
-rviz_romr.png
+# source copy of the RViz still, repo root only; frontend/public/rviz_romr.png
+# is the served one and MUST be committed for the landing page to render
+/rviz_romr.png
