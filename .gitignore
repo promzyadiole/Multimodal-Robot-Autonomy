@@ -38,3 +38,6 @@ backend/**/*.safetensors
 # Misc
 dist/
 build/
+# backend virtualenv (recreate with backend/app/scripts/start_backend.sh header)
+backend/.venv/
+frontend/node_modules/
