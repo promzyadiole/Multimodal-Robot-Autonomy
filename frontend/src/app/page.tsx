@@ -186,6 +186,28 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ---------------- the robot ---------------- */}
+      <section className="relative mx-auto mt-16 max-w-[1180px] px-6">
+        <h2 className="font-data text-[11px] tracking-[0.2em] text-muted uppercase">
+          The robot
+        </h2>
+        <figure className="mt-6 overflow-hidden rounded-sm border border-rule bg-panel">
+          <div className="relative aspect-[21/9] w-full">
+            <Image
+              src="/rviz_romr.png"
+              alt="ROMR rendered in RViz: the cart chassis with its lidar on top, both casters, and live laser returns in red"
+              fill
+              sizes="(max-width: 1180px) 100vw, 1180px"
+              className="object-cover object-[50%_38%]"
+            />
+          </div>
+          <figcaption className="border-t border-rule px-6 py-4 font-data text-[12px] leading-relaxed text-muted">
+            ROMR in RViz — 0.521 × 0.608 m differential drive, lidar at 0.44 m, a
+            caster at each end. The red returns are the live scan it navigates by.
+          </figcaption>
+        </figure>
+      </section>
+
       {/* ---------------- destinations ---------------- */}
       <section className="relative mx-auto mt-16 max-w-[1180px] px-6">
         <h2 className="font-data text-[11px] tracking-[0.2em] text-muted uppercase">

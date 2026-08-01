@@ -51,3 +51,6 @@ thesis/
 
 # source copy of the public portrait; frontend/public/profile.png is the served one
 Promise-Adiole.png
+
+# source copy of the RViz still; frontend/public/rviz_romr.png is the served one
+rviz_romr.png
