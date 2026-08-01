@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Topbar from "@/components/topbar";
 import {
   getEnvironment,
   getNavigationPlaces,
@@ -12,104 +13,11 @@ import {
 
 type PlacesRecord = Record<string, PlacePose>;
 
-const PLACE_STYLES: Record<
-  string,
-  {
-    active: string;
-    inactive: string;
-    soft: string;
-  }
-> = {
-  entrance: {
-    active: "border-indigo-700 bg-indigo-700 text-white shadow-indigo-200",
-    inactive:
-      "border-indigo-200 bg-indigo-50 text-indigo-900 hover:border-indigo-300 hover:bg-indigo-100",
-    soft: "bg-indigo-50 text-indigo-900",
-  },
-  dining: {
-    active: "border-violet-700 bg-violet-700 text-white shadow-violet-200",
-    inactive:
-      "border-violet-200 bg-violet-50 text-violet-900 hover:border-violet-300 hover:bg-violet-100",
-    soft: "bg-violet-50 text-violet-900",
-  },
-  kitchen: {
-    active: "border-amber-600 bg-amber-600 text-white shadow-amber-200",
-    inactive:
-      "border-amber-200 bg-amber-50 text-amber-900 hover:border-amber-300 hover:bg-amber-100",
-    soft: "bg-amber-50 text-amber-900",
-  },
-  hallway: {
-    active: "border-emerald-700 bg-emerald-700 text-white shadow-emerald-200",
-    inactive:
-      "border-emerald-200 bg-emerald-50 text-emerald-900 hover:border-emerald-300 hover:bg-emerald-100",
-    soft: "bg-emerald-50 text-emerald-900",
-  },
-  front_room: {
-    active: "border-sky-700 bg-sky-700 text-white shadow-sky-200",
-    inactive:
-      "border-sky-200 bg-sky-50 text-sky-900 hover:border-sky-300 hover:bg-sky-100",
-    soft: "bg-sky-50 text-sky-900",
-  },
-  sitting_room: {
-    active: "border-rose-700 bg-rose-700 text-white shadow-rose-200",
-    inactive:
-      "border-rose-200 bg-rose-50 text-rose-900 hover:border-rose-300 hover:bg-rose-100",
-    soft: "bg-rose-50 text-rose-900",
-  },
-  parlour: {
-    active: "border-pink-700 bg-pink-700 text-white shadow-pink-200",
-    inactive:
-      "border-pink-200 bg-pink-50 text-pink-900 hover:border-pink-300 hover:bg-pink-100",
-    soft: "bg-pink-50 text-pink-900",
-  },
-  gym_room: {
-    active: "border-cyan-700 bg-cyan-700 text-white shadow-cyan-200",
-    inactive:
-      "border-cyan-200 bg-cyan-50 text-cyan-900 hover:border-cyan-300 hover:bg-cyan-100",
-    soft: "bg-cyan-50 text-cyan-900",
-  },
-  bedroom: {
-    active: "border-fuchsia-700 bg-fuchsia-700 text-white shadow-fuchsia-200",
-    inactive:
-      "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900 hover:border-fuchsia-300 hover:bg-fuchsia-100",
-    soft: "bg-fuchsia-50 text-fuchsia-900",
-  },
-  study_room: {
-    active: "border-teal-700 bg-teal-700 text-white shadow-teal-200",
-    inactive:
-      "border-teal-200 bg-teal-50 text-teal-900 hover:border-teal-300 hover:bg-teal-100",
-    soft: "bg-teal-50 text-teal-900",
-  },
-  visitors_room: {
-    active: "border-orange-700 bg-orange-700 text-white shadow-orange-200",
-    inactive:
-      "border-orange-200 bg-orange-50 text-orange-900 hover:border-orange-300 hover:bg-orange-100",
-    soft: "bg-orange-50 text-orange-900",
-  },
-  center_area: {
-    active: "border-slate-800 bg-slate-800 text-white shadow-slate-200",
-    inactive:
-      "border-slate-300 bg-slate-50 text-slate-900 hover:border-slate-400 hover:bg-slate-100",
-    soft: "bg-slate-50 text-slate-900",
-  },
-};
-
 function formatPlaceLabel(place: string): string {
   return place
     .split("_")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
-}
-
-function getPlaceStyle(place: string) {
-  return (
-    PLACE_STYLES[place] ?? {
-      active: "border-slate-900 bg-slate-900 text-white shadow-slate-200",
-      inactive:
-        "border-slate-300 bg-white text-slate-900 hover:border-slate-400 hover:bg-slate-50",
-      soft: "bg-slate-50 text-slate-900",
-    }
-  );
 }
 
 function quaternionToYaw(qz: number, qw: number): number {
@@ -123,223 +31,207 @@ export default function NavigationPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [busy, setBusy] = useState<boolean>(false);
   const [message, setMessage] = useState<string>("");
+  const [failed, setFailed] = useState<boolean>(false);
 
   useEffect(() => {
     async function load() {
       try {
         setLoading(true);
-
         const [envRes, placesRes] = await Promise.all([
           getEnvironment(),
           getNavigationPlaces(),
         ]);
-
         setEnvironment(envRes.data ?? null);
-
         const loadedPlaces: PlacesRecord = placesRes.data?.places ?? {};
         setPlaces(loadedPlaces);
-
         const firstPlace = Object.keys(loadedPlaces)[0];
-        if (firstPlace) {
-          setSelectedPlace(firstPlace);
-        }
+        if (firstPlace) setSelectedPlace(firstPlace);
       } catch (error) {
+        setFailed(true);
         setMessage(
-          error instanceof Error
-            ? error.message
-            : "Failed to load navigation data."
+          error instanceof Error ? error.message : "Could not load navigation data.",
         );
       } finally {
         setLoading(false);
       }
     }
-
     load();
   }, []);
 
   const placeOptions = useMemo(() => Object.keys(places), [places]);
   const selectedPose = selectedPlace ? places[selectedPlace] : null;
-  const selectedPlaceStyle = getPlaceStyle(selectedPlace);
 
-  async function handleInitializeLocalization() {
+  async function run(
+    fn: () => Promise<{ message?: string }>,
+    fallback: string,
+  ): Promise<void> {
     try {
       setBusy(true);
       setMessage("");
-      const res = await initializeLocalization();
-      setMessage(res.message ?? "Localization initialized.");
+      setFailed(false);
+      const res = await fn();
+      setMessage(res.message ?? fallback);
     } catch (error) {
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : "Failed to initialize localization."
-      );
+      setFailed(true);
+      setMessage(error instanceof Error ? error.message : fallback);
     } finally {
       setBusy(false);
     }
   }
 
-  async function handleGoToPlace() {
-    if (!selectedPlace) return;
-
-    try {
-      setBusy(true);
-      setMessage("");
-      const res = await goToPlace(selectedPlace);
-      setMessage(
-        res.message ?? `Navigation started for ${formatPlaceLabel(selectedPlace)}.`
-      );
-    } catch (error) {
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : "Failed to send navigation goal."
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
+  const nav = environment?.navigation as Record<string, string> | undefined;
+  const mapName = nav?.map_yaml_path?.split("/").pop();
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 p-8">
-      <div className="mx-auto max-w-5xl space-y-6">
-        <div className="rounded-[2rem] border border-white/60 bg-white/90 p-8 shadow-xl shadow-slate-200/60 backdrop-blur">
-          <h1 className="text-4xl font-bold tracking-tight text-slate-950">
-            Navigation
-          </h1>
-          <p className="mt-3 max-w-3xl text-base leading-7 text-slate-700">
-            Initialize localization and send semantic place navigation goals in the active environment.
-          </p>
-        </div>
+    <div>
+      <Topbar
+        title="Navigation"
+        subtitle="Seed localisation, then send the robot to a named place. Coordinates come from the environment's place registry rather than being typed in."
+      />
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          <section className="rounded-[2rem] border border-white/60 bg-white/90 p-6 shadow-lg shadow-slate-200/60 backdrop-blur">
-            <h2 className="text-2xl font-semibold text-slate-950">Environment</h2>
+      {/* Environment as one dense strip of readouts rather than a card of prose. */}
+      <section className="mb-8 grid gap-px overflow-hidden rounded-sm border border-rule bg-rule sm:grid-cols-3">
+        <Readout label="environment" value={environment?.name ?? (loading ? "…" : "—")} />
+        <Readout label="map" value={mapName ?? (loading ? "…" : "—")} />
+        <Readout
+          label="destinations"
+          value={loading ? "…" : String(placeOptions.length)}
+        />
+      </section>
 
-            {loading ? (
-              <p className="mt-4 text-slate-500">Loading environment...</p>
-            ) : (
-              <div className="mt-5 space-y-4 text-slate-700">
-                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                  <p className="text-sm font-medium uppercase tracking-wide text-slate-500">
-                    Active environment
-                  </p>
-                  <p className="mt-2 text-2xl font-semibold text-slate-950">
-                    {environment?.name ?? "Unknown"}
-                  </p>
-                </div>
-
-                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                  <p className="text-sm font-medium uppercase tracking-wide text-slate-500">
-                    Map
-                  </p>
-                  <p className="mt-2 break-all text-sm leading-6 text-slate-800">
-                    {environment?.navigation?.map_yaml_path ?? "Not available"}
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleInitializeLocalization}
-                  disabled={busy}
-                  className="rounded-2xl bg-slate-950 px-5 py-3 font-medium text-white shadow-md shadow-slate-300 transition hover:opacity-90 disabled:opacity-60"
-                >
-                  {busy ? "Working..." : "Initialize Localization"}
-                </button>
-              </div>
-            )}
-          </section>
-
-          <section className="rounded-[2rem] border border-white/60 bg-white/90 p-6 shadow-lg shadow-slate-200/60 backdrop-blur">
-            <h2 className="text-2xl font-semibold text-slate-950">Places</h2>
-
-            {loading ? (
-              <p className="mt-4 text-slate-500">Loading places...</p>
-            ) : (
-              <div className="mt-5 space-y-5">
-                <div>
-                  <span className="mb-3 block text-sm font-medium uppercase tracking-wide text-slate-500">
-                    Choose destination
-                  </span>
-
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    {placeOptions.map((place) => {
-                      const isSelected = selectedPlace === place;
-                      const style = getPlaceStyle(place);
-
-                      return (
-                        <button
-                          key={place}
-                          type="button"
-                          onClick={() => setSelectedPlace(place)}
-                          className={`rounded-2xl border px-4 py-3 text-left font-medium transition shadow-sm ${
-                            isSelected ? style.active : style.inactive
-                          }`}
-                        >
-                          Go to {formatPlaceLabel(place)}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {selectedPose && (
-                  <div
-                    className={`rounded-3xl border border-white/60 p-5 ${selectedPlaceStyle.soft}`}
-                  >
-                    <p className="text-sm font-medium uppercase tracking-wide opacity-70">
-                      Target pose
-                    </p>
-                    <p className="mt-3 text-lg">
-                      <span className="font-semibold">x:</span>{" "}
-                      {selectedPose.x.toFixed(2)}
-                    </p>
-                    <p className="text-lg">
-                      <span className="font-semibold">y:</span>{" "}
-                      {selectedPose.y.toFixed(2)}
-                    </p>
-                    <p className="text-lg">
-                      <span className="font-semibold">qz:</span>{" "}
-                      {selectedPose.qz.toFixed(3)}
-                    </p>
-                    <p className="text-lg">
-                      <span className="font-semibold">qw:</span>{" "}
-                      {selectedPose.qw.toFixed(3)}
-                    </p>
-                    <p className="text-lg">
-                      <span className="font-semibold">yaw:</span>{" "}
-                      {quaternionToYaw(selectedPose.qz, selectedPose.qw).toFixed(2)}
-                    </p>
-                  </div>
-                )}
-
-                <button
-                  type="button"
-                  onClick={handleGoToPlace}
-                  disabled={busy || !selectedPlace}
-                  className={`rounded-2xl px-5 py-3 font-medium shadow-md transition hover:opacity-90 disabled:opacity-60 ${
-                    selectedPlace
-                      ? selectedPlaceStyle.active
-                      : "bg-slate-950 text-white"
-                  }`}
-                >
-                  {busy
-                    ? "Working..."
-                    : selectedPlace
-                    ? `Go To ${formatPlaceLabel(selectedPlace)}`
-                    : "Go To Selected Place"}
-                </button>
-              </div>
-            )}
-          </section>
-        </div>
-
-        {message && (
-          <div className="rounded-[2rem] border border-white/60 bg-white/90 p-6 shadow-lg shadow-slate-200/60 backdrop-blur">
-            <h2 className="text-lg font-semibold text-slate-950">System Message</h2>
-            <p className="mt-2 leading-7 text-slate-700">{message}</p>
+      <div className="grid gap-8 lg:grid-cols-[1fr_20rem]">
+        {/* Destinations carry their coordinates, so the page shows exactly what
+            it will send rather than hiding it behind a label. */}
+        <section>
+          <div className="flex items-baseline justify-between gap-4">
+            <h3 className="font-data text-[11px] tracking-[0.2em] text-muted uppercase">
+              Destinations
+            </h3>
+            <button
+              type="button"
+              onClick={() => run(initializeLocalization, "Localisation initialised.")}
+              disabled={busy}
+              className="font-data text-[11px] text-scan transition-colors hover:text-scan-hot disabled:text-muted"
+            >
+              {busy ? "working…" : "initialise localisation →"}
+            </button>
           </div>
-        )}
+
+          {loading ? (
+            <p className="mt-6 font-data text-[12px] text-muted">loading places…</p>
+          ) : placeOptions.length === 0 ? (
+            <p className="mt-6 font-data text-[12px] text-muted">
+              no places defined in this environment
+            </p>
+          ) : (
+            <ul className="mt-4 divide-y divide-rule overflow-hidden rounded-sm border border-rule">
+              {placeOptions.map((place) => {
+                const pose = places[place];
+                const active = place === selectedPlace;
+                return (
+                  <li key={place}>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPlace(place)}
+                      aria-pressed={active}
+                      className={`flex w-full items-center gap-4 border-l-2 px-4 py-3.5 text-left transition-colors ${
+                        active
+                          ? "border-scan bg-panel-2"
+                          : "border-transparent bg-panel hover:bg-panel-2"
+                      }`}
+                    >
+                      <span
+                        className={`text-[14px] ${active ? "text-ink" : "text-ink-soft"}`}
+                      >
+                        {formatPlaceLabel(place)}
+                      </span>
+                      <span className="ml-auto font-data text-[11px] tabular-nums text-muted">
+                        {Number(pose.x).toFixed(2)}, {Number(pose.y).toFixed(2)}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+
+        <aside className="flex flex-col gap-4">
+          <div className="rounded-sm border border-rule bg-panel p-5">
+            <h3 className="font-data text-[11px] tracking-[0.2em] text-muted uppercase">
+              Target pose
+            </h3>
+            {selectedPose ? (
+              <dl className="mt-4 flex flex-col gap-2 font-data text-[12px] tabular-nums">
+                <Field k="x" v={Number(selectedPose.x).toFixed(4)} />
+                <Field k="y" v={Number(selectedPose.y).toFixed(4)} />
+                <Field
+                  k="yaw"
+                  v={`${quaternionToYaw(
+                    Number(selectedPose.qz),
+                    Number(selectedPose.qw),
+                  ).toFixed(3)} rad`}
+                />
+                <Field k="frame" v="map" />
+              </dl>
+            ) : (
+              <p className="mt-4 font-data text-[12px] text-muted">pick a destination</p>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() =>
+              run(
+                () => goToPlace(selectedPlace),
+                `Goal sent to ${formatPlaceLabel(selectedPlace)}.`,
+              )
+            }
+            disabled={busy || !selectedPlace}
+            className="rounded-sm bg-scan px-5 py-3.5 font-data text-[13px] font-medium tracking-wide text-ground transition-colors hover:bg-scan-hot disabled:cursor-not-allowed disabled:bg-panel-2 disabled:text-muted"
+          >
+            {busy
+              ? "dispatching…"
+              : `Go to ${selectedPlace ? formatPlaceLabel(selectedPlace) : "…"}`}
+          </button>
+
+          {message ? (
+            <p
+              role="status"
+              className={`border-l-2 py-1 pl-3 text-[12.5px] leading-relaxed ${
+                failed ? "border-signal text-signal" : "border-scan text-ink-soft"
+              }`}
+            >
+              {message}
+            </p>
+          ) : null}
+
+          <p className="text-[12px] leading-relaxed text-muted">
+            Dispatch returns as soon as nav2 accepts the goal. To wait for the real
+            outcome — and recover if it fails — use Chat, which verifies arrival.
+          </p>
+        </aside>
       </div>
-    </main>
+    </div>
+  );
+}
+
+function Readout({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-panel px-5 py-4">
+      <p className="font-data text-[10px] tracking-[0.18em] text-muted uppercase">
+        {label}
+      </p>
+      <p className="mt-1.5 truncate font-data text-[14px] text-ink">{value}</p>
+    </div>
+  );
+}
+
+function Field({ k, v }: { k: string; v: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-4">
+      <dt className="text-muted">{k}</dt>
+      <dd className="text-ink">{v}</dd>
+    </div>
   );
 }

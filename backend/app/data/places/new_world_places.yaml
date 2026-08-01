@@ -61,7 +61,7 @@ places:
     z: 0.0
     qz: -0.707670
     qw: 0.706543
-    aliases: ['store area', 'store', 'storage']
+    aliases: ['store area', 'store', 'storage', 'storage area', 'store room']
     metadata: {'capture_on_arrival': True}
 
   home:
@@ -70,4 +70,4 @@ places:
     z: 0.0
     qz: 0.706895
     qw: 0.707319
-    aliases: ['home', 'start', 'origin', 'base']
+    aliases: ['home', 'start', 'origin', 'base', 'home base', 'back home']

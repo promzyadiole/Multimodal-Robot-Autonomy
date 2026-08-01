@@ -6,8 +6,8 @@ import ChatPanel from "@/components/chat-panel";
 import { sendChatCommand } from "@/lib/api";
 
 export default function ChatPage() {
-  const [answer, setAnswer] = useState("No answer yet.");
-  const [response, setResponse] = useState("No response yet.");
+  const [answer, setAnswer] = useState("");
+  const [response, setResponse] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -15,49 +15,54 @@ export default function ChatPage() {
     try {
       setLoading(true);
       setError("");
-
       const result = await sendChatCommand(message);
-
       setResponse(JSON.stringify(result, null, 2));
       setAnswer(result?.data?.answer ?? result?.message ?? "Command processed.");
     } catch (err) {
       console.error(err);
-      setError("Failed to fetch");
-      setAnswer("No answer yet.");
-      setResponse("No response yet.");
+      setError("Could not reach the backend on :8000.");
+      setAnswer("");
+      setResponse("");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="space-y-6">
+    <div>
       <Topbar
         title="Chat"
-        subtitle="Send natural-language commands to the robot backend."
+        subtitle="Say where the robot should go in ordinary words. The intent is parsed, resolved against the place registry, and dispatched to nav2."
       />
 
       <ChatPanel onSendCommand={handleSendCommand} loading={loading} />
 
-      {error && (
-        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+      {error ? (
+        <p
+          role="alert"
+          className="mt-6 border-l-2 border-signal py-1 pl-3 text-[13px] text-signal"
+        >
           {error}
-        </div>
-      )}
+        </p>
+      ) : null}
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <h2 className="text-2xl font-semibold text-slate-900">Answer</h2>
-        <div className="mt-4 rounded-xl bg-slate-100 px-4 py-3 text-slate-800">
-          {answer}
-        </div>
-      </div>
+      <section className="mt-8">
+        <h3 className="font-data text-[11px] tracking-[0.2em] text-muted uppercase">
+          Answer
+        </h3>
+        <p className="mt-3 border-l-2 border-scan py-1 pl-4 text-[15px] leading-relaxed text-ink">
+          {answer || <span className="text-muted">nothing sent yet</span>}
+        </p>
+      </section>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <h2 className="text-2xl font-semibold text-slate-900">Response</h2>
-        <pre className="mt-4 overflow-x-auto rounded-xl bg-slate-100 px-4 py-3 text-sm text-slate-800">
-          {response}
+      <details className="mt-8 rounded-sm border border-rule bg-panel">
+        <summary className="cursor-pointer px-5 py-3.5 font-data text-[11px] tracking-[0.2em] text-muted uppercase">
+          Raw response
+        </summary>
+        <pre className="overflow-x-auto border-t border-rule px-5 py-4 font-data text-[12px] leading-relaxed text-ink-soft">
+          {response || "—"}
         </pre>
-      </div>
+      </details>
     </div>
   );
 }

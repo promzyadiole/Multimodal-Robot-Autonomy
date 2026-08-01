@@ -55,6 +55,8 @@ places:
     - store area
     - store
     - storage
+    - storage area
+    - store room
     pose:
       x: -0.4101
       y: -3.3416
@@ -67,6 +69,8 @@ places:
     - start
     - origin
     - base
+    - home base
+    - back home
     pose:
       x: -5.8533
       y: -0.2812

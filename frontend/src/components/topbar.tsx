@@ -3,11 +3,18 @@ type TopbarProps = {
   subtitle?: string;
 };
 
+/** Page header: an eyebrow rule, the title in the display face, then the note. */
 export default function Topbar({ title, subtitle }: TopbarProps) {
   return (
-    <div className="mb-6 border-b border-gray-200 pb-4">
-      <h2 className="text-2xl font-semibold text-gray-900">{title}</h2>
-      {subtitle ? <p className="mt-1 text-sm text-gray-500">{subtitle}</p> : null}
-    </div>
+    <header className="mb-8 border-b border-rule pb-5">
+      <h2 className="font-display text-[2rem] leading-none tracking-[-0.01em] text-ink">
+        {title}
+      </h2>
+      {subtitle ? (
+        <p className="mt-2.5 max-w-2xl text-[13.5px] leading-relaxed text-ink-soft">
+          {subtitle}
+        </p>
+      ) : null}
+    </header>
   );
 }

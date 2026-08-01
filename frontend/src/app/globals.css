@@ -89,3 +89,47 @@ body {
   outline: 2px solid var(--color-scan);
   outline-offset: 3px;
 }
+
+/* ------------------------------------------------------------------ *
+   Bridge layer.
+
+   The inner pages were written against a light card theme (bg-white,
+   text-slate-900, rounded-2xl, heavy shadows) which is now unreadable on
+   the console ground -- headings were rendering dark-on-dark. Rather than
+   rewrite ~1100 lines of markup, the legacy utilities are remapped onto
+   the palette here. These rules sit after the Tailwind import, so they win
+   on source order at equal specificity.
+
+   New work should use the tokens directly (bg-panel, text-ink, border-rule)
+   and this layer should shrink over time.
+ * ------------------------------------------------------------------ */
+
+.bg-white, .bg-slate-50, .bg-gray-50, .bg-slate-100 { background-color: var(--color-panel) !important; }
+.bg-slate-200, .bg-gray-200 { background-color: var(--color-panel-2) !important; }
+.bg-slate-950, .bg-slate-900, .bg-gray-900, .bg-black { background-color: var(--color-scan) !important; color: var(--color-ground) !important; }
+.bg-slate-800 { background-color: var(--color-panel-2) !important; }
+
+.text-slate-950, .text-slate-900, .text-gray-900, .text-black { color: var(--color-ink) !important; }
+.text-slate-800, .text-slate-700, .text-gray-700 { color: var(--color-ink-soft) !important; }
+.text-slate-600, .text-slate-500, .text-gray-600, .text-gray-500, .text-slate-400 { color: var(--color-muted) !important; }
+.text-white { color: var(--color-ground) !important; }
+
+.border-slate-200, .border-gray-200, .border-slate-300, .border-gray-300 { border-color: var(--color-rule) !important; }
+
+/* Bounding boxes: square the pill-shaped cards off and drop the drop shadows,
+   which read as glossy on a dark ground. Hairline rules do the separating. */
+.rounded-2xl, .rounded-xl, .rounded-lg { border-radius: 3px !important; }
+.shadow-sm, .shadow, .shadow-md, .shadow-lg { box-shadow: none !important; }
+
+/* Give every legacy card the same hairline edge so panels read as instrument
+   plates rather than floating tiles. */
+.bg-panel.rounded-2xl, .bg-panel.rounded-xl,
+[class*="rounded-"][class*="bg-white"] { border: 1px solid var(--color-rule); }
+
+/* Form controls inherited the light theme too. */
+input, textarea, select {
+  background-color: var(--color-ground) !important;
+  color: var(--color-ink) !important;
+  border-color: var(--color-rule) !important;
+}
+input::placeholder, textarea::placeholder { color: var(--color-muted) !important; }
