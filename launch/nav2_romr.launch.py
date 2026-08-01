@@ -12,10 +12,9 @@ def generate_launch_description():
     pkg_share = FindPackageShare(package="multimodal_robot_autonomy").find("multimodal_robot_autonomy")
     nav2_bringup_dir = get_package_share_directory("nav2_bringup")
 
-    # Defaults to the map that shipped with Language-Grounded-Robot-Autonomy,
-    # which pairs with worlds/promzy_small_house.world. Pass map:=<name>.yaml to
-    # use another, e.g. the one generated from the world geometry
-    # (small_house_map.yaml).
+    # Defaults to custom_map.yaml, which pairs with worlds/new_world.world.
+    # Pass map:=<name>.yaml for another, e.g. promzy_small_house_map.yaml or the
+    # geometry-generated small_house_map.yaml (both for the AWS house world).
     map_file = PathJoinSubstitution([pkg_share, "maps", LaunchConfiguration("map")])
 
     params_file = os.path.join(
@@ -40,7 +39,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument(
             "map",
-            default_value="promzy_small_house_map.yaml",
+            default_value="custom_map.yaml",
             description="Map file under the package's maps/ directory",
         ),
         nav2_launch,
