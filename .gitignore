@@ -44,3 +44,7 @@ frontend/node_modules/
 
 # frontend skills copied in from ai_projects/CLAUDE/promzy — local only, not committed
 .claude/skills/
+
+# personal profile export and thesis source material — local only, never committed
+Profile.pdf
+thesis/
