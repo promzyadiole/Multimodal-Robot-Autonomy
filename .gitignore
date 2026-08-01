@@ -48,3 +48,6 @@ frontend/node_modules/
 # personal profile export and thesis source material — local only, never committed
 Profile.pdf
 thesis/
+
+# source copy of the public portrait; frontend/public/profile.png is the served one
+Promise-Adiole.png

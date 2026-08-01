@@ -1,27 +1,46 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import Sidebar from "@/components/sidebar";
+import { Archivo, Instrument_Serif, JetBrains_Mono } from "next/font/google";
+import Shell from "@/components/shell";
+
+// Editorial serif against instrument mono: the serif carries research
+// gravitas, the mono keeps the telemetry honest to the domain.
+const instrument = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
+  variable: "--font-instrument",
+  display: "swap",
+});
+
+const archivo = Archivo({
+  subsets: ["latin"],
+  variable: "--font-archivo",
+  display: "swap",
+});
+
+const jetbrains = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
-  title: "Robot Command Center",
-  description: "FastAPI + Next.js frontend for ROS2 navigation, vision, and chat.",
+  title: "Language-Grounded Robot Autonomy",
+  description:
+    "A custom differential-drive robot that takes destinations in plain language — LLM intent grounding, multimodal perception, and ROS 2 navigation.",
 };
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      <body className="min-h-screen bg-slate-50 text-slate-900">
-        <div className="mx-auto flex min-h-screen w-full max-w-[1600px]">
-          <aside className="w-64 shrink-0 border-r border-slate-200 bg-white">
-            <Sidebar />
-          </aside>
-
-          <main className="min-w-0 flex-1 overflow-x-auto p-4 md:p-6">
-            <div className="mx-auto w-full max-w-6xl">{children}</div>
-          </main>
-        </div>
+    <html
+      lang="en"
+      className={`${instrument.variable} ${archivo.variable} ${jetbrains.variable}`}
+    >
+      <body className="min-h-screen bg-ground text-ink">
+        <Shell>{children}</Shell>
       </body>
     </html>
   );
