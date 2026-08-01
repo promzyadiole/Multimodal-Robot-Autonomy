@@ -185,7 +185,7 @@ def _handle_query(
 ) -> BasicActionResponse:
     if intent == "GET_STATUS":
         summary = store.get_summary()
-        nav2_ready = bool(store.get("nav2_ready", False))
+        nav2_ready = bridge.nav2_is_ready()
         is_navigating = bool(store.get("is_navigating", False))
         last_command = summary.get("last_command") or "none"
 

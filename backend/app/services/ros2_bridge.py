@@ -22,6 +22,10 @@ from tf_transformations import quaternion_from_euler
 from app.services.state_store import get_state_store
 
 
+# How stale the last nav2-sourced message may be before we call it not ready.
+NAV2_LIVENESS_SEC = 5.0
+
+
 def quaternion_to_yaw(z: float, w: float) -> float:
     return math.atan2(2.0 * w * z, 1.0 - 2.0 * z * z)
 
@@ -44,6 +48,20 @@ class ROS2Bridge(Node):
 
         self.current_nav_goal_handle = None
         self.current_waypoint_goal_handle = None
+
+        # Readiness probe. A node's graph info is only kept current for topics
+        # it actually has an endpoint on: without this subscription
+        # count_publishers() returned 0 while nav2 was demonstrably serving
+        # goals. ActionClient.server_is_ready() is no better -- it stayed True
+        # 30 s after nav2 was killed.
+        # nav2's lifecycle nodes publish bond heartbeats on /bond continuously
+        # while they are up, which is the one signal that is neither cached nor
+        # event-driven. /amcl_pose was the obvious candidate but AMCL only
+        # publishes when the robot moves past its update thresholds, so a
+        # stationary robot looked dead.
+        from bond.msg import Status as BondStatus
+        self._bond_seen_at: float = 0.0
+        self.create_subscription(BondStatus, "/bond", self._bond_callback, 1)
 
         # Recovery: the obstacle layer accumulates readings of world furniture that
         # the SLAM map does not contain, and can close a doorway behind the robot.
@@ -103,12 +121,31 @@ class ROS2Bridge(Node):
         odom = self.store.get("odom", {}) or {}
         return dict(odom)
 
+    def _bond_callback(self, _msg) -> None:
+        self._bond_seen_at = time.time()
+
+    def nav2_is_ready(self) -> bool:
+        """Probe the action servers now rather than trusting a cached flag.
+
+        mark_nav2_ready() runs once when the bridge is constructed, so if nav2
+        starts or stops afterwards that value is simply wrong -- the UI showed
+        "nav2 ready" while nav2 was not running at all. server_is_ready() is
+        non-blocking, so this is cheap enough to call per request.
+        """
+        # Judged from heartbeats we actually receive. This process's DDS graph
+        # view does not track nav2 coming and going: count_publishers() stayed 0
+        # while nav2 was serving goals, and ActionClient.server_is_ready()
+        # stayed True 30 s after nav2 was killed.
+        ready = (time.time() - self._bond_seen_at) < NAV2_LIVENESS_SEC
+        self.store.set("nav2_ready", ready)
+        return ready
+
     def get_robot_status(self) -> Dict[str, Any]:
         current_pose = self.get_current_pose()
         odom = self.get_odom()
 
         return {
-            "nav2_ready": bool(self.store.get("nav2_ready", False)),
+            "nav2_ready": self.nav2_is_ready(),
             "current_pose": current_pose,
             "last_command": self.store.get("last_command"),
             "is_navigating": bool(self.store.get("is_navigating", False)),

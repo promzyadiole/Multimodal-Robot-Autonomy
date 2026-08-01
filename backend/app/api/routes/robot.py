@@ -18,7 +18,8 @@ def get_status(
     odom = bridge.get_odom()
 
     return RobotStatusResponse(
-        nav2_ready=bool(store.get("nav2_ready", False)),
+        # live probe, not the cached flag -- see ROS2Bridge.nav2_is_ready
+        nav2_ready=bridge.nav2_is_ready(),
         current_pose=current_pose,
         last_command=snapshot.get("last_command"),
         is_navigating=bool(store.get("is_navigating", False)),

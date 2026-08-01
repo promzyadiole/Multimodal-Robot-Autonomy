@@ -245,7 +245,7 @@ class CommandGraph:
         if intent == "GET_STATUS":
             summary = self.store.get_summary()
             return {"success": True,
-                    "answer": (f"Nav2 ready: {bool(self.store.get('nav2_ready', False))}. "
+                    "answer": (f"Nav2 ready: {self.bridge.nav2_is_ready()}. "
                                f"Navigating: {bool(self.store.get('is_navigating', False))}."),
                     "data": {"summary": summary}}
 
