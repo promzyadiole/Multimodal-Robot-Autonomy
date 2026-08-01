@@ -168,7 +168,13 @@ local_costmap:
       width: 3
       height: 3
       resolution: 0.05
-      robot_radius: 0.33
+      # ROMR is not circular: 0.521 m long x 0.608 m wide, measured from the
+      # link meshes plus joint offsets (the wheels are 0.119 m thick each and
+      # reach y=+/-0.304, well outside the 0.185 body edge). As a circle it has
+      # a 0.422 m circumscribed radius and would demand 0.84 m passages, which
+      # blocked planning through this building's doorways. A footprint polygon
+      # gives an inscribed radius of 0.229 and orientation-aware checking.
+      footprint: "[[0.292, 0.304], [0.292, -0.304], [-0.229, -0.304], [-0.229, 0.304]]"
       plugins: ["obstacle_layer", "inflation_layer"]
 
       obstacle_layer:
@@ -201,7 +207,13 @@ global_costmap:
       publish_frequency: 1.0
       global_frame: map
       robot_base_frame: base_link
-      robot_radius: 0.33
+      # ROMR is not circular: 0.521 m long x 0.608 m wide, measured from the
+      # link meshes plus joint offsets (the wheels are 0.119 m thick each and
+      # reach y=+/-0.304, well outside the 0.185 body edge). As a circle it has
+      # a 0.422 m circumscribed radius and would demand 0.84 m passages, which
+      # blocked planning through this building's doorways. A footprint polygon
+      # gives an inscribed radius of 0.229 and orientation-aware checking.
+      footprint: "[[0.292, 0.304], [0.292, -0.304], [-0.229, -0.304], [-0.229, 0.304]]"
       resolution: 0.05
       track_unknown_space: true
       plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
