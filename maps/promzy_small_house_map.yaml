@@ -1,0 +1,10 @@
+# SLAM map that shipped with the Language-Grounded-Robot-Autonomy project,
+# paired with worlds/promzy_small_house.world. Verified against that world's
+# geometry: 89.7% of its occupied cells fall within 10 cm of the world's,
+# median error 0.00 m.
+image: promzy_small_house_map.pgm
+resolution: 0.05
+origin: [-12.5, -12.5, 0.0]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.196

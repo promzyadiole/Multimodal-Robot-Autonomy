@@ -2,9 +2,9 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
 
 
@@ -12,11 +12,11 @@ def generate_launch_description():
     pkg_share = FindPackageShare(package="multimodal_robot_autonomy").find("multimodal_robot_autonomy")
     nav2_bringup_dir = get_package_share_directory("nav2_bringup")
 
-    map_file = os.path.join(
-        pkg_share,
-        "maps",
-        "small_house_map.yaml",
-    )
+    # Defaults to the map that shipped with Language-Grounded-Robot-Autonomy,
+    # which pairs with worlds/promzy_small_house.world. Pass map:=<name>.yaml to
+    # use another, e.g. the one generated from the world geometry
+    # (small_house_map.yaml).
+    map_file = PathJoinSubstitution([pkg_share, "maps", LaunchConfiguration("map")])
 
     params_file = os.path.join(
         pkg_share,
@@ -38,5 +38,10 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        DeclareLaunchArgument(
+            "map",
+            default_value="promzy_small_house_map.yaml",
+            description="Map file under the package's maps/ directory",
+        ),
         nav2_launch,
     ])

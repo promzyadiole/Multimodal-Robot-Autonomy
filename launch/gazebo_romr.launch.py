@@ -17,12 +17,14 @@ def generate_launch_description():
     house_models = os.path.join(small_house_repo, "models")
     turtlebot3_models = os.path.join(pkg_share, "models")
 
-    # The house geometry lives in the AWS checkout, so the world stays external:
-    # this package's worlds/romr_empty.world is only sun + ground plane.
+    # promzy_small_house.world is this project's own copy of the house and is
+    # byte-identical to the AWS one once line endings are normalised, so the
+    # world is now in-repo. The furniture models it includes still come from the
+    # AWS checkout via GAZEBO_MODEL_PATH below.
     small_house_world = os.path.join(
-        small_house_repo,
+        pkg_share,
         "worlds",
-        "small_house.world",
+        "promzy_small_house.world",
     )
 
     state_publisher_launch = os.path.join(
