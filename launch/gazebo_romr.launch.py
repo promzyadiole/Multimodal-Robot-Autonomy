@@ -38,7 +38,10 @@ def generate_launch_description():
 
     world = PathJoinSubstitution([pkg_share, "worlds", LaunchConfiguration("world")])
 
-    state_publisher_launch = os.path.join(pkg_share, "launch", "state_publisher.launch.py")
+    # spawn_robot.launch.py runs robot_state_publisher itself, so this file must
+    # not also include state_publisher.launch.py -- two publishers of the same
+    # robot_description is redundant and, if they ever disagree, makes the TF
+    # tree flip between them.
     spawn_launch = os.path.join(pkg_share, "launch", "spawn_robot.launch.py")
 
     gazebo_model_path = SetEnvironmentVariable(
@@ -59,10 +62,6 @@ def generate_launch_description():
             "libgazebo_ros_factory.so",
         ],
         output="screen",
-    )
-
-    state_publisher = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(state_publisher_launch)
     )
 
     spawn = TimerAction(
@@ -92,6 +91,5 @@ def generate_launch_description():
         DeclareLaunchArgument("yaw", default_value="0.0"),
         gazebo_model_path,
         gazebo,
-        state_publisher,
         spawn,
     ])
