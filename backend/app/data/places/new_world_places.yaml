@@ -1,0 +1,73 @@
+# Named destinations for worlds/new_world.world, taken from the places
+# dictionary in Language-Grounded-Robot-Autonomy
+# (backend/app/data/robot_actions.yaml).
+#
+# Those poses are expressed in that map's ORIGINAL SLAM frame, which sits a
+# quarter turn from the Gazebo world frame. maps/custom_map has since been
+# re-georeferenced to the world, so each pose is converted here with
+#     world = R(+90 deg) * (pose_old - [0.3416, -5.9101]),  yaw += 90 deg
+# Untransformed, 4 of the 7 fell outside the map entirely; transformed, all 7
+# sit in free space reachable from the spawn pose (clearances 0.45-1.55 m).
+
+environment: new_world
+frame_id: map
+
+places:
+  parlour:
+    x: -5.9101
+    y: -3.3416
+    z: 0.0
+    qz: -0.707670
+    qw: 0.706543
+    aliases: ['parlour', 'living room', 'lounge', 'sitting room']
+
+  kitchen:
+    x: -8.9101
+    y: -4.3416
+    z: 0.0
+    qz: -0.707670
+    qw: 0.706543
+    aliases: ['kitchen']
+
+  dining_room:
+    x: -8.9101
+    y: 7.6584
+    z: 0.0
+    qz: 1.000000
+    qw: 0.000398
+    aliases: ['dining room', 'dining area']
+    metadata: {'capture_on_arrival': True}
+
+  master_bedroom:
+    x: -2.9101
+    y: 7.6584
+    z: 0.0
+    qz: 1.000000
+    qw: 0.000398
+    aliases: ['master bedroom', 'bedroom']
+
+  garage:
+    x: -0.4101
+    y: 2.8584
+    z: 0.0
+    qz: 0.000398
+    qw: 1.000000
+    aliases: ['garage']
+    metadata: {'capture_on_arrival': True}
+
+  store_area:
+    x: -0.4101
+    y: -3.3416
+    z: 0.0
+    qz: -0.707670
+    qw: 0.706543
+    aliases: ['store area', 'store', 'storage']
+    metadata: {'capture_on_arrival': True}
+
+  home:
+    x: -5.8533
+    y: -0.2812
+    z: 0.0
+    qz: 0.706895
+    qw: 0.707319
+    aliases: ['home', 'start', 'origin', 'base']

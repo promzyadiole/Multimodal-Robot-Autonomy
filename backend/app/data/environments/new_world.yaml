@@ -1,0 +1,34 @@
+name: new_world
+description: Custom scene from Language-Grounded-Robot-Autonomy, navigated by the ROMR robot
+
+simulation:
+  world_name: new_world
+  world_path: /home/promise/Multimodal-Robot-Autonomy/worlds/new_world.world
+  # new_world builds its scene from stock Gazebo models (suv, cafe_table,
+  # euro_pallet, wooden_case) rather than the AWS residential set.
+  gazebo_models_path: /home/promise/.gazebo/models
+  robot_models_path: /home/promise/turtlebot3_ws/install/multimodal_robot_autonomy/share/multimodal_robot_autonomy/models
+
+robot:
+  model: romr
+  entity_name: romr
+  description_path: /home/promise/Multimodal-Robot-Autonomy/urdf/romr.urdf.xacro
+  spawn_pose:
+    x: -2.0
+    y: -1.0
+    z: 0.20
+    yaw: 0.0
+
+navigation:
+  use_sim_time: true
+  map_yaml_path: /home/promise/Multimodal-Robot-Autonomy/maps/custom_map.yaml
+  initial_pose:
+    x: -2.0
+    y: -1.0
+    yaw: 0.0
+    covariance:
+      x: 0.05
+      y: 0.05
+      yaw: 0.02
+
+places_file: /home/promise/Multimodal-Robot-Autonomy/backend/app/data/places/new_world_places.yaml
