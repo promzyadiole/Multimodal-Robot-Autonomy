@@ -12,9 +12,64 @@ from app.services.action_mapper import ActionMapper
 from app.services.intent_parser import IntentParser
 from app.services.ros2_bridge import ROS2Bridge
 from app.services.state_store import StateStore
+from app.services.command_graph import get_command_graph
 from app.services.vision_service import VisionService
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
+
+
+@router.post("/graph-command", response_model=BasicActionResponse)
+def graph_command(
+    payload: ChatCommandRequest,
+    parser: IntentParser = Depends(get_intent_parser),
+    mapper: ActionMapper = Depends(get_action_mapper),
+    bridge: ROS2Bridge = Depends(get_ros_bridge_dep),
+    store: StateStore = Depends(get_state_store_dep),
+    vision: VisionService = Depends(get_vision_service),
+):
+    """Same command surface as /command, routed through the LangGraph graph.
+
+    The difference that matters: this one waits for the goal's real outcome and,
+    on an abort, clears the costmaps and retries once before answering. Each node
+    is a LangSmith span when LANGSMITH_TRACING=true.
+    """
+    user_text = (
+        getattr(payload, "message", None) or getattr(payload, "command", None) or ""
+    ).strip()
+    if not user_text:
+        raise HTTPException(status_code=400, detail="Command text is required.")
+
+    graph = get_command_graph(parser, mapper, bridge, store, vision)
+    result = graph.run(user_text)
+    return BasicActionResponse(
+        success=result["success"],
+        message=result["answer"],
+        data=result,
+    )
+
+
+@router.get("/graph")
+def graph_shape():
+    """The command graph itself, for the command center to render."""
+    from app.services.command_graph import CommandGraph
+
+    return {
+        "success": True,
+        "message": "Command graph.",
+        "data": {
+            "mermaid": CommandGraph.mermaid(),
+            "nodes": [
+                {"id": "understand", "does": "classify intent, extract the place"},
+                {"id": "navigate", "does": "resolve the place to a pose and dispatch to nav2"},
+                {"id": "verify", "does": "wait for the goal's real outcome"},
+                {"id": "recover", "does": "clear both costmaps, then retry once"},
+                {"id": "move", "does": "bounded velocity primitive"},
+                {"id": "answer", "does": "reply, with the reason when it failed"},
+            ],
+            "tracing_enabled": __import__("os").getenv("LANGSMITH_TRACING", "").lower() == "true",
+            "langsmith_project": __import__("os").getenv("LANGSMITH_PROJECT"),
+        },
+    }
 
 
 @router.post("/command", response_model=BasicActionResponse)

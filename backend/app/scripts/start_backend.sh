@@ -47,6 +47,23 @@ mkdir -p "$HF_HOME/hub"
 # Clear them so this project's .env is authoritative. ~/.bashrc is left alone.
 unset SAM_MODEL_TYPE SAM_CHECKPOINT
 
+# Export everything in .env into the process environment. pydantic-settings reads
+# the file directly, but langsmith/langchain and the OpenAI SDK read os.environ --
+# without this, LANGSMITH_TRACING is set in .env yet tracing stays off.
+# Parsed line by line rather than sourced: values here contain spaces
+# (LANGSMITH_PROJECT, APP_NAME) and `. ./.env` would execute them as commands.
+if [ -f .env ]; then
+  while IFS= read -r line || [ -n "$line" ]; do
+    case "$line" in ''|'#'*) continue ;; esac
+    key=${line%%=*}
+    val=${line#*=}
+    case "$key" in *[!A-Za-z0-9_]*) continue ;; esac   # skip malformed keys
+    val=${val%\"} ; val=${val#\"}                       # strip optional quotes
+    val=${val%\'} ; val=${val#\'}
+    export "$key=$val"
+  done < .env
+fi
+
 # Which environment the command center serves: new_world (default) or small_house.
 export MRA_ENVIRONMENT=${MRA_ENVIRONMENT:-new_world}
 

@@ -11,6 +11,7 @@ from action_msgs.msg import GoalStatus
 from cv_bridge import CvBridge
 from geometry_msgs.msg import PoseStamped, Twist
 from nav2_msgs.action import FollowWaypoints, NavigateToPose
+from nav2_msgs.srv import ClearEntireCostmap
 from nav_msgs.msg import Odometry
 from rclpy.action import ActionClient
 from rclpy.node import Node
@@ -43,6 +44,16 @@ class ROS2Bridge(Node):
 
         self.current_nav_goal_handle = None
         self.current_waypoint_goal_handle = None
+
+        # Recovery: the obstacle layer accumulates readings of world furniture that
+        # the SLAM map does not contain, and can close a doorway behind the robot.
+        # Clearing both costmaps is what unsticks it.
+        self.clear_global_costmap_client = self.create_client(
+            ClearEntireCostmap, "/global_costmap/clear_entirely_global_costmap"
+        )
+        self.clear_local_costmap_client = self.create_client(
+            ClearEntireCostmap, "/local_costmap/clear_entirely_local_costmap"
+        )
 
         self.create_subscription(Odometry, "/odom", self._odom_callback, 10)
         self.create_subscription(LaserScan, "/scan", self._scan_callback, 10)
@@ -240,6 +251,8 @@ class ROS2Bridge(Node):
         future = self.navigate_to_pose_client.send_goal_async(goal_msg)
         future.add_done_callback(self._navigate_goal_response_callback)
 
+        # cleared here so a caller can wait for THIS goal's outcome
+        self.store.set("nav_outcome", None)
         self.store.set("is_navigating", True)
         return {
             "success": True,
@@ -288,18 +301,46 @@ class ROS2Bridge(Node):
             self.store.set("is_navigating", False)
 
             if status == GoalStatus.STATUS_SUCCEEDED:
+                self.store.set("nav_outcome", "succeeded")
                 self.get_logger().info("NavigateToPose succeeded.")
             elif status == GoalStatus.STATUS_ABORTED:
+                self.store.set("nav_outcome", "aborted")
                 self.get_logger().warning("NavigateToPose aborted.")
             elif status == GoalStatus.STATUS_CANCELED:
+                self.store.set("nav_outcome", "canceled")
                 self.get_logger().warning("NavigateToPose canceled.")
             else:
+                self.store.set("nav_outcome", f"status_{status}")
                 self.get_logger().warning(
                     f"NavigateToPose finished with status {status}."
                 )
         except Exception as exc:
             self.store.set("is_navigating", False)
+            self.store.set("nav_outcome", "error")
             self.get_logger().error(f"NavigateToPose result error: {exc}")
+
+    def clear_costmaps(self, timeout_sec: float = 5.0) -> Dict[str, Any]:
+        """Clear both nav2 costmaps. Used to recover from a stale obstacle layer."""
+        cleared, failed = [], []
+        for name, client in (
+            ("global", self.clear_global_costmap_client),
+            ("local", self.clear_local_costmap_client),
+        ):
+            if not client.wait_for_service(timeout_sec=timeout_sec):
+                failed.append(f"{name} (service unavailable)")
+                continue
+            try:
+                client.call_async(ClearEntireCostmap.Request())
+                cleared.append(name)
+            except Exception as exc:  # noqa: BLE001
+                failed.append(f"{name} ({exc})")
+        return {
+            "success": not failed,
+            "cleared": cleared,
+            "failed": failed,
+            "message": ("Cleared costmaps: " + ", ".join(cleared)) if cleared
+                       else "Could not clear any costmap.",
+        }
 
     def follow_waypoints(self, points: List[Dict[str, Any]]) -> Dict[str, Any]:
         goal_msg = FollowWaypoints.Goal()
