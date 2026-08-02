@@ -7,8 +7,30 @@
 </p>
 
 <p align="center">
-  <em>Builds on <a href="https://github.com/promzyadiole/Language-Vision-Grounded-Robot-Autonomy">Language-Vision-Grounded-Robot-Autonomy</a>, extending it to spawn and navigate a custom robot. The demo above is hosted on that project.</em>
+  <strong><a href="https://frontend-pas-projects-20244f71.vercel.app">▶ Live command centre</a></strong>
+  &nbsp;·&nbsp;
+  <em>replays a recorded run — no robot is connected to the public deployment</em>
 </p>
+
+<p align="center">
+  <em>A personal project. Builds on <a href="https://github.com/promzyadiole/Language-Vision-Grounded-Robot-Autonomy">Language-Vision-Grounded-Robot-Autonomy</a>, extending it to spawn and navigate a custom robot.</em>
+</p>
+
+---
+
+**What this is, in one paragraph.** You say "go and wait in the dining room". An LLM
+resolves the intent, the place name is grounded against a metric map, and ROS 2 Nav2
+drives a differential-drive robot there. Perception is open-vocabulary (SAM + CLIP), and
+the whole command policy is a LangGraph state machine whose every branch is recorded and
+traced in LangSmith.
+
+**The headline result is a negative one, and it is the point.** Across 54 natural-language
+commands, intent resolution was 54/54. But scoring arrival against Gazebo ground truth
+rather than the robot's own localisation estimate, the navigation stack *reported* success
+on 12 and had *actually* arrived on 3 — **10 of 12 reported successes were false**, with a
+median true error of 6.04 m. Measured the conventional way this system looks nearly four
+times better than it is. See [`validation_results_groundtruth.csv`](validation_results_groundtruth.csv)
+for the per-trial data and `scripts/plot_validation.py` for the figure.
 
 <p align="center">
   <strong>A full-stack robotics framework for language-guided navigation, semantic localization, multimodal perception, and ROS 2 robot control through a modern web command center.</strong>
