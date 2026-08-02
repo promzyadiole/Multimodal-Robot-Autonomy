@@ -22,6 +22,7 @@ const groups: { label: string; items: { href: string; label: string; hint: strin
     items: [
       { href: "/dashboard", label: "Dashboard", hint: "live telemetry" },
       { href: "/vision", label: "Vision", hint: "what it sees" },
+      { href: "/graph", label: "Reasoning", hint: "how it decided" },
     ],
   },
 ];

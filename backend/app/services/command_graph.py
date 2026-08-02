@@ -64,6 +64,8 @@ class CommandState(TypedDict, total=False):
     success: bool
     data: Dict[str, Any]
     trail: List[str]
+    trace: List[Dict[str, Any]]
+    t0: float
 
 
 class CommandGraph:
@@ -77,14 +79,47 @@ class CommandGraph:
         self.vision = vision
         self._graph = self._build()
 
+    # ---- tracing -------------------------------------------------------
+    @staticmethod
+    def _step(state: CommandState, node: str, started: float, **detail) -> Dict[str, Any]:
+        """Record one node visit: when it ran, how long it took, what it decided.
+
+        Returned as a state fragment so a node can splat it alongside its own
+        keys. `trail` stays a plain list of node names because the graph diagram
+        highlights by name; `trace` carries the detail the operator reads.
+
+        Conditional edges are deliberately not traced here: LangGraph discards
+        state mutations made inside an edge function, so a branch records its
+        reason in the node it lands on instead.
+        """
+        now = time.time()
+        entry = {
+            "node": node,
+            "at_ms": int((now - state.get("t0", started)) * 1000),
+            "took_ms": int((now - started) * 1000),
+            "detail": {k: v for k, v in detail.items() if v is not None},
+        }
+        return {
+            "trail": state.get("trail", []) + [node],
+            "trace": state.get("trace", []) + [entry],
+        }
+
     # ---- nodes ---------------------------------------------------------
     def _understand(self, state: CommandState) -> CommandState:
+        started = time.time()
         parsed = self.parser.parse(state["user_text"])
         return {
             "parsed": parsed,
             "intent": parsed.intent,
             "response_text": parsed.response_text,
-            "trail": state.get("trail", []) + ["understand"],
+            **self._step(
+                state, "understand", started,
+                heard=state.get("user_text"),
+                intent=parsed.intent,
+                target_place=parsed.target_place,
+                route_name=parsed.route_name,
+                motion=parsed.motion,
+            ),
         }
 
     def _classify(self, state: CommandState) -> str:
@@ -110,6 +145,7 @@ class CommandGraph:
         return "answer"
 
     def _navigate(self, state: CommandState) -> CommandState:
+        started = time.time()
         mapped = state.get("mapped") or self.mapper.map_intent(state["parsed"])
         attempts = state.get("attempts", 0) + 1
 
@@ -120,7 +156,14 @@ class CommandGraph:
                 "dispatch": dispatch,
                 "attempts": attempts,
                 "place_key": mapped.get("route_name"),
-                "trail": state.get("trail", []) + ["navigate"],
+                **self._step(
+                    state, "navigate", started,
+                    branch="intent named a route",
+                    route_name=mapped.get("route_name"),
+                    waypoints=len(mapped.get("points") or []),
+                    attempt=attempts,
+                    accepted=dispatch.get("success") if isinstance(dispatch, dict) else None,
+                ),
             }
 
         pose = mapped["pose"]
@@ -132,12 +175,20 @@ class CommandGraph:
             "pose": pose,
             "dispatch": dispatch,
             "attempts": attempts,
-            "trail": state.get("trail", []) + ["navigate"],
+            **self._step(
+                state, "navigate", started,
+                branch="intent named a place",
+                resolved_to=mapped.get("place_key"),
+                goal=f"x {pose['x']:.3f}  y {pose['y']:.3f}  yaw {pose['yaw']:.3f}",
+                attempt=attempts,
+                accepted=dispatch.get("success") if isinstance(dispatch, dict) else None,
+            ),
         }
 
     def _verify(self, state: CommandState) -> CommandState:
         """Wait for the goal's real outcome instead of assuming it succeeded."""
-        deadline = time.time() + VERIFY_TIMEOUT_SEC
+        started = time.time()
+        deadline = started + VERIFY_TIMEOUT_SEC
         outcome = None
         while time.time() < deadline:
             outcome = self.store.get("nav_outcome")
@@ -146,7 +197,13 @@ class CommandGraph:
             time.sleep(VERIFY_POLL_SEC)
         return {
             "outcome": outcome or "timeout",
-            "trail": state.get("trail", []) + ["verify"],
+            **self._step(
+                state, "verify", started,
+                waited_for="nav2 goal result",
+                outcome=outcome or "timeout",
+                timed_out=(outcome is None) or None,
+                budget_sec=int(VERIFY_TIMEOUT_SEC),
+            ),
         }
 
     def _after_verify(self, state: CommandState) -> str:
@@ -158,14 +215,23 @@ class CommandGraph:
 
     def _recover(self, state: CommandState) -> CommandState:
         """Clear the costmaps, which is what unsticks an accumulated obstacle layer."""
+        started = time.time()
         result = self.bridge.clear_costmaps()
         time.sleep(2.0)  # let the layers repopulate from live scans
         return {
             "recovery": result,
-            "trail": state.get("trail", []) + ["recover"],
+            **self._step(
+                state, "recover", started,
+                branch=f"outcome was '{state.get('outcome')}' on attempt "
+                       f"{state.get('attempts', 1)} of {MAX_NAV_ATTEMPTS}",
+                action="cleared the global and local costmaps",
+                cleared=result.get("cleared") if isinstance(result, dict) else None,
+                settle_sec=2.0,
+            ),
         }
 
     def _move(self, state: CommandState) -> CommandState:
+        started = time.time()
         mapped = state.get("mapped") or self.mapper.map_intent(state["parsed"])
         cmd = mapped["cmd_vel"]
         if state.get("intent") == "STOP":
@@ -181,10 +247,19 @@ class CommandGraph:
             "route": "motion",
             "dispatch": result,
             "place_key": mapped.get("motion_key"),
-            "trail": state.get("trail", []) + ["move"],
+            **self._step(
+                state, "move", started,
+                branch="intent was a raw motion, not a destination",
+                primitive=mapped.get("motion_key"),
+                cmd_vel=f"linear {cmd['linear_x']:.2f} m/s  "
+                        f"angular {cmd['angular_z']:.2f} rad/s  "
+                        f"for {cmd['duration_sec']:.1f} s",
+                emergency_stop=(state.get("intent") == "STOP") or None,
+            ),
         }
 
     def _answer(self, state: CommandState) -> CommandState:
+        started = time.time()
         intent = state.get("intent", "UNKNOWN")
         route = state.get("route")
         base = state.get("response_text") or ""
@@ -213,12 +288,23 @@ class CommandGraph:
                     "obstacles that are not in the map."
                 )
                 success = False
-            return {"answer": answer, "success": success,
-                    "trail": state.get("trail", []) + ["answer"]}
+            return {
+                "answer": answer, "success": success,
+                **self._step(
+                    state, "answer", started,
+                    branch=f"nav2 outcome '{outcome}'",
+                    reported=answer,
+                    attempts_used=state.get("attempts"),
+                ),
+            }
 
         if route == "motion":
-            return {"answer": base or "Motion command sent.", "success": True,
-                    "trail": state.get("trail", []) + ["answer"]}
+            return {
+                "answer": base or "Motion command sent.", "success": True,
+                **self._step(state, "answer", started,
+                             branch="motion primitive dispatched",
+                             reported=base or "Motion command sent."),
+            }
 
         # queries and everything unhandled fall back to the existing behaviour
         payload = self._query_payload(intent, base)
@@ -227,7 +313,9 @@ class CommandGraph:
             "success": payload["success"],
             "data": payload.get("data", {}),
             "route": "query",
-            "trail": state.get("trail", []) + ["answer"],
+            **self._step(state, "answer", started,
+                         branch=f"'{intent}' is a question, no motion needed",
+                         reported=payload["answer"]),
         }
 
     def _query_payload(self, intent: str, response_text: str) -> Dict[str, Any]:
@@ -297,7 +385,10 @@ class CommandGraph:
 
     # ---- entry point ---------------------------------------------------
     def run(self, user_text: str) -> Dict[str, Any]:
-        final = self._graph.invoke({"user_text": user_text, "attempts": 0, "trail": []})
+        started = time.time()
+        final = self._graph.invoke(
+            {"user_text": user_text, "attempts": 0, "trail": [], "trace": [], "t0": started}
+        )
         return {
             "success": bool(final.get("success", True)),
             "answer": final.get("answer", ""),
@@ -309,6 +400,8 @@ class CommandGraph:
             "attempts": final.get("attempts", 0),
             "recovery": final.get("recovery"),
             "path": final.get("trail", []),
+            "trace": final.get("trace", []),
+            "elapsed_ms": int((time.time() - started) * 1000),
             "tracing": os.getenv("LANGSMITH_TRACING", "").lower() == "true",
             "project": os.getenv("LANGSMITH_PROJECT"),
             "data": final.get("data", {}),

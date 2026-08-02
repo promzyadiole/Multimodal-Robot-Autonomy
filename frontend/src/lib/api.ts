@@ -190,3 +190,55 @@ export async function goToPlace(placeName: string): Promise<ApiResponse<Navigati
   );
   return handleResponse<ApiResponse<NavigationResponseData>>(res);
 }
+
+/* the LangGraph command graph */
+
+export type CommandGraphNode = {
+  id: string;
+  does: string;
+};
+
+export type CommandGraphData = {
+  mermaid?: string;
+  nodes?: CommandGraphNode[];
+  tracing_enabled?: boolean;
+  langsmith_project?: string | null;
+};
+
+export type GraphRunData = {
+  answer?: string;
+  intent?: string;
+  route?: string;
+  place?: string;
+  outcome?: string;
+  attempts?: number;
+  recovery?: string;
+  /** the nodes the run actually passed through, in order, with repeats */
+  path?: string[];
+  tracing?: boolean;
+  project?: string | null;
+  pose?: Record<string, unknown>;
+  [key: string]: unknown;
+};
+
+export async function getCommandGraph(): Promise<ApiResponse<CommandGraphData>> {
+  const res = await fetch(`${API_BASE}/api/chat/graph`, { cache: "no-store" });
+  return handleResponse<ApiResponse<CommandGraphData>>(res);
+}
+
+/**
+ * Runs a command through the graph. This waits for nav2's real outcome —
+ * including one recovery retry — so it can legitimately take minutes.
+ */
+export async function sendGraphCommand(
+  command: string,
+): Promise<ApiResponse<GraphRunData>> {
+  const res = await fetch(`${API_BASE}/api/chat/graph-command`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ command }),
+  });
+  return handleResponse<ApiResponse<GraphRunData>>(res);
+}

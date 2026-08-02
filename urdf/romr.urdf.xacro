@@ -132,15 +132,24 @@
   </link>
   <joint name="casterwheel_joint" type="fixed">
     <!--
-      z was -0.1075, which put the caster's underside at -0.1587 while the
-      drive wheels contact at -0.146 (joint z=-0.063 minus measured wheel
-      radius 0.083). The robot therefore rested nose-down on the caster with
-      the drive wheels partly unloaded, giving poor traction, veer on straight
-      commands and a turn that only worked in one direction.
-      -0.0948 = wheel contact plane (-0.146) + caster radius (0.0512), so the
-      caster just touches the same ground plane as the wheels.
+      Ground contact heights, all measured from the mesh files rather than
+      assumed:
+
+        leftwheel.STL / rightwheel.STL  radius 0.08294  (bbox 0.16588 across)
+        wheel contact plane            -0.063 - 0.08294 = -0.14594
+        casterwheel.STL                reaches 0.03791 below its link origin
+
+      so a caster joint sits at -0.14594 + 0.03791 = -0.10803 for its underside
+      to meet the same ground plane as the wheels.
+
+      This was briefly -0.0948, computed from an assumed caster radius of
+      0.0512 instead of the mesh's actual 0.03791 drop. That lifted both
+      casters 13.2 mm clear of the floor, so the robot balanced on the two
+      drive wheels alone and tipped nose-down 2 deg onto the front caster,
+      dragging it as a skid: it reached only 14% of commanded speed
+      (0.021 m/s against 0.15 m/s commanded) and nav2 aborted continually.
     -->
-    <origin xyz="0.25029 -0.01098 -0.0948" rpy="0 0 0" />
+    <origin xyz="0.25029 -0.01098 -0.10803" rpy="0 0 0" />
     <parent link="base_link" />
     <child link="casterwheel_link" />
     <axis xyz="0 0 0" />
@@ -155,7 +164,8 @@
     7.4 deg of roll, so it went over backwards rather than sideways.
     Placing a second caster at x=-0.20 (inside the body, which reaches -0.229)
     extends the support polygon rearward and raises that margin to 40.0 deg.
-    z matches the front caster so both touch the wheels' ground plane.
+    z matches the front caster so both touch the wheels' ground plane; see the
+    derivation on casterwheel_joint.
   -->
   <link name="rearcaster_link">
     <inertial>
@@ -179,7 +189,7 @@
     </collision>
   </link>
   <joint name="rearcaster_joint" type="fixed">
-    <origin xyz="-0.20 0.0 -0.0948" rpy="0 0 0" />
+    <origin xyz="-0.20 0.0 -0.10803" rpy="0 0 0" />
     <parent link="base_link" />
     <child link="rearcaster_link" />
     <axis xyz="0 0 0" />

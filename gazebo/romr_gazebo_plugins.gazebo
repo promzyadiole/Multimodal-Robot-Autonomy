@@ -34,7 +34,18 @@
       <wheel_diameter>0.1627</wheel_diameter>
 
       <max_wheel_torque>20</max_wheel_torque>
-      <max_wheel_acceleration>1.0</max_wheel_acceleration>
+      <!--
+        Was 1.0 rad/s^2, which is 1.0 * 0.08135 = 0.081 m/s^2 of linear
+        acceleration. nav2's DWB is configured with acc_lim_x 1.5 m/s^2 and
+        simulates every candidate trajectory against that figure, so it was
+        planning for a robot that accelerates 18x harder than this one can.
+        The robot needed 4.3 s and 0.75 m just to reach max_vel_x 0.35, by
+        which point it was nowhere near the simulated path; the controller
+        reported "No valid trajectories out of 419!" and aborted.
+        18.44 = acc_lim_x 1.5 / wheel radius 0.08135, i.e. the plugin can now
+        actually deliver what the controller assumes. Rounded to 18.5.
+      -->
+      <max_wheel_acceleration>18.5</max_wheel_acceleration>
 
       <command_topic>cmd_vel</command_topic>
       <odometry_topic>odom</odometry_topic>
