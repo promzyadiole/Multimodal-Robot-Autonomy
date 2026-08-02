@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Topbar from "@/components/topbar";
 import {
   getCommandGraph,
+  isUsingRecording,
+  onDataSourceChange,
   sendGraphCommand,
   type CommandGraphData,
   type GraphRunData,
@@ -118,11 +120,17 @@ export default function GraphPage() {
   const [run, setRun] = useState<GraphRunData | null>(null);
   const [busy, setBusy] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+  // When no robot is connected the only run available is the one that was
+  // recorded, so the command is pinned to it. Leaving the box free would let a
+  // visitor type anything and be shown a run of something else.
+  const [recorded, setRecorded] = useState<boolean>(false);
 
   useEffect(() => {
     getCommandGraph()
       .then((r) => setShape(r.data ?? null))
       .catch(() => setShape(null));
+    setRecorded(isUsingRecording());
+    return onDataSourceChange(setRecorded);
   }, []);
 
   const path = useMemo(() => (run?.path ?? []) as string[], [run]);
@@ -175,8 +183,13 @@ export default function GraphPage() {
           onKeyDown={(e) => {
             if (e.key === "Enter" && !busy) execute();
           }}
+          readOnly={recorded}
+          aria-readonly={recorded}
+          title={recorded ? "Pinned: this is the command that was recorded" : undefined}
           placeholder="type a command to run through the graph"
-          className="flex-1 rounded-sm border border-rule bg-ground px-4 py-3 font-data text-[13px] text-ink placeholder:text-muted focus:border-scan focus:outline-none"
+          className={`flex-1 rounded-sm border border-rule bg-ground px-4 py-3 font-data text-[13px] text-ink placeholder:text-muted focus:outline-none ${
+            recorded ? "cursor-default text-ink-soft" : "focus:border-scan"
+          }`}
         />
         <button
           type="button"
@@ -184,9 +197,17 @@ export default function GraphPage() {
           disabled={busy}
           className="rounded-sm bg-scan px-6 py-3 font-data text-[13px] font-medium text-ground transition-colors hover:bg-scan-hot disabled:cursor-not-allowed disabled:bg-panel-2 disabled:text-muted"
         >
-          {busy ? "running…" : "run through graph"}
+          {busy ? "running…" : recorded ? "replay recorded run" : "run through graph"}
         </button>
       </div>
+
+      {recorded ? (
+        <p className="mb-4 font-data text-[11.5px] leading-relaxed text-muted">
+          the command is pinned because this is the run that was captured — a
+          real navigation that aborted, recovered by clearing both costmaps, and
+          succeeded on the second attempt
+        </p>
+      ) : null}
 
       {busy ? (
         <p className="mb-4 border-l-2 border-scan py-1 pl-3 font-data text-[12px] text-ink-soft">
