@@ -59,3 +59,6 @@ thesis/
 # Generated caches and scratch recordings
 /backend/app/data/rag_cache/
 /TMP_RECORDING.mp4
+
+# Vercel link metadata
+.vercel/
