@@ -177,6 +177,7 @@ class RagService:
         self.stats = RagStats()
         self._client = None
         self._index = None
+        self._namespaces: Optional[List[str]] = None
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
         self._embed_cache: Dict[str, List[float]] = self._load(EMBED_CACHE)
         self._answer_cache: Dict[str, Any] = self._load(ANSWER_CACHE)
@@ -286,12 +287,57 @@ class RagService:
     # -- retrieval
     def retrieve(self, question: str, top_k: int = DEFAULT_TOP_K,
                  namespace: str = "") -> List[Retrieved]:
+        """Retrieve across namespaces, guaranteeing each one is represented.
+
+        A single top-k over the union of documents is dominated by whichever
+        document has the most chunks. Measured here: the thesis contributes 56
+        chunks and the profile 4, and a question about the author retrieved five
+        thesis chunks at similarity 0.197--0.208 and nothing from the profile
+        that actually held the answer -- so the generator correctly, and
+        uselessly, reported that the sources did not cover it.
+
+        Retrieving a quota from each namespace separately removes the size bias:
+        the minority document is always represented, and the generator decides
+        what is relevant. Ranking within the merged set is still by score, so a
+        genuinely irrelevant namespace contributes low-scoring passages that the
+        prompt's "say so if the sources do not cover it" instruction handles.
+        """
+        namespaces = [namespace] if namespace else self.namespaces()
+        if len(namespaces) <= 1:
+            return self._query_one(question, top_k, namespaces[0] if namespaces else "")
+
+        # split the budget, leaving at least one slot per namespace
+        per_ns = max(1, top_k // len(namespaces))
+        hits: List[Retrieved] = []
+        t0 = time.time()
+        for ns in namespaces:
+            hits.extend(self._query_one(question, per_ns, ns, timed=False))
+        self.stats.last_latency_ms["retrieve"] = (time.time() - t0) * 1000
+        hits.sort(key=lambda h: h.score, reverse=True)
+        return hits[: max(top_k, len(namespaces))]
+
+    def namespaces(self) -> List[str]:
+        """Namespaces present in the index, cached after the first call."""
+        if self._namespaces is None:
+            try:
+                stats = self.index.describe_index_stats()
+                self._namespaces = sorted(
+                    ns for ns, v in (stats.get("namespaces") or {}).items()
+                    if (v.get("vector_count") or 0) > 0
+                )
+            except Exception:  # noqa: BLE001
+                self._namespaces = []
+        return self._namespaces
+
+    def _query_one(self, question: str, top_k: int, namespace: str,
+                   timed: bool = True) -> List[Retrieved]:
         qv = self.embed([question])[0]
         t0 = time.time()
         res = self.index.query(
             vector=qv, top_k=top_k, include_metadata=True, namespace=namespace
         )
-        self.stats.last_latency_ms["retrieve"] = (time.time() - t0) * 1000
+        if timed:
+            self.stats.last_latency_ms["retrieve"] = (time.time() - t0) * 1000
         hits = []
         for m in res.get("matches", []):
             md = m.get("metadata") or {}

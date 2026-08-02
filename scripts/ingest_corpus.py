@@ -60,7 +60,8 @@ def pages_of(path: Path) -> list[tuple[int, str]]:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--file", action="append", default=[])
-    ap.add_argument("--namespace", default="")
+    ap.add_argument("--namespace", default=None,
+                    help="override; by default each document goes in its own namespace")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
@@ -69,6 +70,10 @@ def main() -> int:
 
     docs = ([(Path(f), Path(f).stem) for f in args.file] if args.file else DEFAULT_DOCS)
 
+    # Each document gets its own namespace. A single top-k over the union is
+    # dominated by whichever document has the most chunks, which measurably hid
+    # the 4-chunk profile behind the 56-chunk thesis.
+    per_ns: dict[str, list[Chunk]] = {}
     all_chunks: list[Chunk] = []
     print(f"{'document':28} {'pages':>6} {'tokens':>9} {'chunks':>7}")
     for path, label in docs:
@@ -81,6 +86,7 @@ def main() -> int:
         for pageno, text in pages:
             tokens += count_tokens(text)
             chunks.extend(chunk_text(text, source=label, page=pageno))
+        per_ns.setdefault(args.namespace or label, []).extend(chunks)
         all_chunks.extend(chunks)
         print(f"{label:28} {len(pages):6} {tokens:9} {len(chunks):7}")
 
@@ -99,10 +105,14 @@ def main() -> int:
 
     rag = get_rag_service()
     print(f"\n  embedding with {rag.status()['embedding_model']} -> index '{rag.index_name}'")
-    res = rag.ingest(all_chunks, namespace=args.namespace)
-    print(f"  upserted {res['upserted']} vectors "
-          f"({res['cache_hits']} embeddings served from cache, "
-          f"{res['embed_calls']} API calls)")
+    total = 0
+    for ns, chunks in per_ns.items():
+        res = rag.ingest(chunks, namespace=ns)
+        total += res["upserted"]
+        print(f"  namespace '{ns}': upserted {res['upserted']} vectors")
+    print(f"  {total} vectors total "
+          f"({rag.stats.embed_cache_hits} embeddings served from cache, "
+          f"{rag.stats.embed_calls} API calls)")
     st = rag.status()
     print(f"  index now holds {st['vectors']} vectors")
     return 0

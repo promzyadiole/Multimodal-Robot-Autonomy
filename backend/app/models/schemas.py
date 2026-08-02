@@ -53,6 +53,9 @@ class RobotStatusResponse(BaseModel):
     is_navigating: bool = False
     linear_velocity: Optional[float] = None
     angular_velocity: Optional[float] = None
+    # AMCL's own covariance, surfaced so the operator can see when the robot
+    # does not trust its position. Absent until a pose estimate is published.
+    localisation: Optional[dict] = None
 
 
 class GoToPlaceRequest(BaseModel):

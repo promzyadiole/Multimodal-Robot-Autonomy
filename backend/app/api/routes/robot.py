@@ -25,6 +25,7 @@ def get_status(
         is_navigating=bool(store.get("is_navigating", False)),
         linear_velocity=odom.get("linear_x"),
         angular_velocity=odom.get("angular_z"),
+        localisation=bridge.get_localisation_confidence(),
     )
 
 

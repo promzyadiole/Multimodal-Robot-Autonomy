@@ -151,7 +151,79 @@ class ROS2Bridge(Node):
             "is_navigating": bool(self.store.get("is_navigating", False)),
             "linear_velocity": odom.get("linear_x"),
             "angular_velocity": odom.get("angular_z"),
+            "localisation": self.get_localisation_confidence(),
         }
+
+    # ---- localisation confidence ---------------------------------------
+    #
+    # AMCL cannot tell you that its estimate has become wrong -- a particle
+    # filter maintains a belief and corrects it incrementally, and every
+    # consumer downstream (planner, controller, goal checker) treats that
+    # belief as fact. Measured on this system, belief and ground truth
+    # diverged by up to 15.5 m while nav2 continued to report goals as
+    # succeeded, and 83% of reported successes were false.
+    #
+    # The filter does, however, publish the covariance of its own estimate.
+    # A spread population is the filter saying it is unsure, and that signal
+    # was simply not being read. This does not fix divergence -- a confidently
+    # wrong filter still reports a tight covariance -- but it converts a
+    # silent failure into a reported one, which is the difference between a
+    # robot that lies and a robot that says "I do not know where I am".
+
+    # 1 sigma, metres and radians, beyond which the estimate is not trusted
+    POSITION_SIGMA_LIMIT = 0.60
+    YAW_SIGMA_LIMIT = 0.35
+
+    def _record_confidence(self, covariance) -> None:
+        """Extract the diagonal of the 6x6 pose covariance AMCL publishes."""
+        try:
+            cov = list(covariance)
+            var_x, var_y, var_yaw = cov[0], cov[7], cov[35]
+        except Exception:  # noqa: BLE001
+            return
+        sigma_x = math.sqrt(max(var_x, 0.0))
+        sigma_y = math.sqrt(max(var_y, 0.0))
+        sigma_yaw = math.sqrt(max(var_yaw, 0.0))
+        self.store.set(
+            "amcl_confidence",
+            {
+                "sigma_x": round(sigma_x, 4),
+                "sigma_y": round(sigma_y, 4),
+                "sigma_yaw": round(sigma_yaw, 4),
+                # a single scalar for the UI: the larger positional spread
+                "position_sigma": round(max(sigma_x, sigma_y), 4),
+                "confident": (
+                    max(sigma_x, sigma_y) <= self.POSITION_SIGMA_LIMIT
+                    and sigma_yaw <= self.YAW_SIGMA_LIMIT
+                ),
+                "at": time.time(),
+            },
+        )
+
+    def get_localisation_confidence(self) -> Dict[str, Any]:
+        c = self.store.get("amcl_confidence")
+        if not c:
+            return {"known": False, "confident": None,
+                    "reason": "no pose estimate published yet"}
+        age = time.time() - c.get("at", 0.0)
+        stale = age > 10.0
+        confident = bool(c["confident"]) and not stale
+        if stale:
+            reason = f"last estimate is {age:.0f} s old"
+        elif c["confident"]:
+            reason = "particle spread within limits"
+        else:
+            reason = (
+                f"particle spread too wide: position sigma "
+                f"{c['position_sigma']:.2f} m (limit {self.POSITION_SIGMA_LIMIT}), "
+                f"yaw sigma {c['sigma_yaw']:.2f} rad (limit {self.YAW_SIGMA_LIMIT})"
+            )
+        return {"known": True, "confident": confident, "reason": reason,
+                "age_sec": round(age, 1), **{k: c[k] for k in
+                ("sigma_x", "sigma_y", "sigma_yaw", "position_sigma")}}
+
+    def is_localised(self) -> bool:
+        return bool(self.get_localisation_confidence().get("confident"))
 
     def _amcl_callback(self, msg) -> None:
         yaw = quaternion_to_yaw(
@@ -168,6 +240,7 @@ class ROS2Bridge(Node):
             "qw": msg.pose.pose.orientation.w,
         }
 
+        self._record_confidence(msg.pose.covariance)
         self.store.set("amcl_pose", pose_data)
         self.store.update_pose(
             x=pose_data["x"],
