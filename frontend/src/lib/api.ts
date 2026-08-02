@@ -40,6 +40,31 @@ function markRecorded() {
 /** Forced on for the public build; otherwise only used when the backend is down. */
 const FORCE_DEMO = process.env.NEXT_PUBLIC_DEMO === "1";
 
+/**
+ * For endpoints that command the robot. There is no recording that can stand in
+ * for an action, so these explain themselves rather than pretending to work --
+ * a demo that silently reports a dispatched goal it never dispatched is worse
+ * than one that says it cannot.
+ */
+async function liveOrExplain<T>(live: () => Promise<T>, what: string): Promise<T> {
+  if (FORCE_DEMO) {
+    markRecorded();
+    throw new Error(
+      `No robot is connected — this is a recorded demonstration, so ${what} is ` +
+        `not available. The simulator runs on a separate machine.`,
+    );
+  }
+  try {
+    return await live();
+  } catch (e) {
+    markRecorded();
+    throw new Error(
+      `No robot is connected, so ${what} is not available. ` +
+        (e instanceof Error ? e.message : ""),
+    );
+  }
+}
+
 async function liveOrRecorded<T>(live: () => Promise<T>, recorded: () => T): Promise<T> {
   if (FORCE_DEMO) {
     markRecorded();
@@ -172,40 +197,40 @@ export async function getRobotStatus(): Promise<ApiResponse> {
 }
 
 export async function stopRobot(): Promise<ApiResponse> {
-  const res = await fetch(`${API_BASE}/api/robot/stop`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-  return handleResponse<ApiResponse>(res);
+  return liveOrExplain(async () => {
+    const res = await fetch(`${API_BASE}/api/robot/stop`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+    return handleResponse<ApiResponse>(res);
+  }, "stopping the robot");
 }
 
 export async function getVisionSummaryFast(): Promise<ApiResponse> {
-  const res = await fetch(`${API_BASE}/api/vision/scene-summary-fast`, {
-    cache: "no-store",
-  });
-  return handleResponse<ApiResponse>(res);
+  return liveOrExplain(async () => {
+    const res = await fetch(`${API_BASE}/api/vision/scene-summary-fast`, { cache: "no-store" });
+    return handleResponse<ApiResponse>(res);
+  }, "scene description — it needs the camera and the SAM/CLIP models");
 }
 
 export async function getVisionObjectsFastAnnotated(): Promise<ApiResponse> {
-  const res = await fetch(`${API_BASE}/api/vision/objects-fast-annotated`, {
-    cache: "no-store",
-  });
-  return handleResponse<ApiResponse>(res);
+  return liveOrExplain(async () => {
+    const res = await fetch(`${API_BASE}/api/vision/objects-fast-annotated`, { cache: "no-store" });
+    return handleResponse<ApiResponse>(res);
+  }, "object detection — it needs the camera and the SAM/CLIP models");
 }
 
 export async function sendChatCommand(
   command: string
 ): Promise<ApiResponse<ChatCommandResponseData>> {
-  const res = await fetch(`${API_BASE}/api/chat/command`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ command }),
-  });
-  return handleResponse<ApiResponse<ChatCommandResponseData>>(res);
+  return liveOrExplain(async () => {
+    const res = await fetch(`${API_BASE}/api/chat/command`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ command }),
+    });
+    return handleResponse<ApiResponse<ChatCommandResponseData>>(res);
+  }, "sending a command to the robot");
 }
 
 /* new small-house exports */
@@ -233,26 +258,23 @@ export async function getNavigationPlaces(): Promise<ApiResponse<PlacesResponseD
 }
 
 export async function initializeLocalization(): Promise<ApiResponse<LocalizationResponseData>> {
-  const res = await fetch(`${API_BASE}/api/localization/initialize`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-  return handleResponse<ApiResponse<LocalizationResponseData>>(res);
+  return liveOrExplain(async () => {
+    const res = await fetch(`${API_BASE}/api/localization/initialize`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+    return handleResponse<ApiResponse<LocalizationResponseData>>(res);
+  }, "seeding localisation");
 }
 
 export async function goToPlace(placeName: string): Promise<ApiResponse<NavigationResponseData>> {
-  const res = await fetch(
-    `${API_BASE}/api/navigation/go-to/${encodeURIComponent(placeName)}`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }
-  );
-  return handleResponse<ApiResponse<NavigationResponseData>>(res);
+  return liveOrExplain(async () => {
+    const res = await fetch(
+      `${API_BASE}/api/navigation/go-to/${encodeURIComponent(placeName)}`,
+      { method: "POST", headers: { "Content-Type": "application/json" } },
+    );
+    return handleResponse<ApiResponse<NavigationResponseData>>(res);
+  }, `dispatching a goal to ${placeName}`);
 }
 
 /* the LangGraph command graph */
