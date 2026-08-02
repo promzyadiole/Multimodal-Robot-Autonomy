@@ -62,3 +62,6 @@ thesis/
 
 # Vercel link metadata
 .vercel/
+
+# Draft social copy, not part of the system
+/LINKEDIN_POST.md
