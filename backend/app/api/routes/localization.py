@@ -5,7 +5,6 @@ from fastapi import APIRouter, Depends
 from app.core.dependencies import get_environment_service_dep
 from app.models.schemas import BasicActionResponse
 from app.services.environment_service import EnvironmentService
-from app.services.initial_pose_service import get_initial_pose_publisher
 
 router = APIRouter(prefix="/api/localization", tags=["localization"])
 
@@ -17,6 +16,19 @@ def initialize_localization(
     nav_cfg = env_service.environment.get("navigation", {})
     pose = nav_cfg.get("initial_pose", {})
     covariance = pose.get("covariance", {})
+
+    # imported here, not at module scope: this pulls in rclpy, and the service
+    # must start on hosts with no ROS runtime (see core.dependencies)
+    from app.core.dependencies import ros_is_available
+
+    if not ros_is_available():
+        from fastapi import HTTPException
+
+        raise HTTPException(
+            status_code=503,
+            detail="No ROS 2 runtime on this host, so localisation cannot be seeded.",
+        )
+    from app.services.initial_pose_service import get_initial_pose_publisher
 
     publisher = get_initial_pose_publisher()
     result = publisher.publish_initial_pose(

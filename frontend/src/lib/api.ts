@@ -1,4 +1,57 @@
+import {
+  DEMO_ENVIRONMENT, DEMO_GRAPH_SHAPE, DEMO_PLACES, DEMO_RUN, DEMO_STATUS,
+} from "./demo-data";
+
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8000";
+
+/* ------------------------------------------------------------------ *
+   Live backend, or recorded fallback.
+
+   The public deployment has no robot behind it -- Gazebo, ROS 2 and the
+   perception models cannot run on a serverless host, and one navigation
+   command takes 25-143 s, past any serverless timeout. Rather than show a
+   wall of fetch errors, every call falls back to a recording of a real run
+   and flags that it did so, which the header surfaces to the visitor.
+
+   The same build therefore serves both cases: run it beside the robot and it
+   is live; deploy it and it demonstrates recorded behaviour honestly.
+ * ------------------------------------------------------------------ */
+
+/** True once any call has fallen back, so the UI can say so. */
+let usingRecording = false;
+const listeners = new Set<(v: boolean) => void>();
+
+export function isUsingRecording(): boolean {
+  return usingRecording;
+}
+
+export function onDataSourceChange(fn: (v: boolean) => void): () => void {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+}
+
+function markRecorded() {
+  if (!usingRecording) {
+    usingRecording = true;
+    listeners.forEach((fn) => fn(true));
+  }
+}
+
+/** Forced on for the public build; otherwise only used when the backend is down. */
+const FORCE_DEMO = process.env.NEXT_PUBLIC_DEMO === "1";
+
+async function liveOrRecorded<T>(live: () => Promise<T>, recorded: () => T): Promise<T> {
+  if (FORCE_DEMO) {
+    markRecorded();
+    return recorded();
+  }
+  try {
+    return await live();
+  } catch {
+    markRecorded();
+    return recorded();
+  }
+}
 
 export type PlacePose = {
   x: number;
@@ -109,10 +162,13 @@ export async function getHealth(): Promise<ApiResponse> {
 }
 
 export async function getRobotStatus(): Promise<ApiResponse> {
-  const res = await fetch(`${API_BASE}/api/robot/status`, {
-    cache: "no-store",
-  });
-  return handleResponse<ApiResponse>(res);
+  return liveOrRecorded(
+    async () => {
+      const res = await fetch(`${API_BASE}/api/robot/status`, { cache: "no-store" });
+      return handleResponse<ApiResponse>(res);
+    },
+    () => DEMO_STATUS as unknown as ApiResponse,
+  );
 }
 
 export async function stopRobot(): Promise<ApiResponse> {
@@ -155,17 +211,25 @@ export async function sendChatCommand(
 /* new small-house exports */
 
 export async function getEnvironment(): Promise<ApiResponse<EnvironmentResponseData>> {
-  const res = await fetch(`${API_BASE}/api/system/environment`, {
-    cache: "no-store",
-  });
-  return handleResponse<ApiResponse<EnvironmentResponseData>>(res);
+  return liveOrRecorded(
+    async () => {
+      const res = await fetch(`${API_BASE}/api/system/environment`, { cache: "no-store" });
+      return handleResponse<ApiResponse<EnvironmentResponseData>>(res);
+    },
+    () => ({ success: true, message: "recorded",
+             data: DEMO_ENVIRONMENT as unknown as EnvironmentResponseData }),
+  );
 }
 
 export async function getNavigationPlaces(): Promise<ApiResponse<PlacesResponseData>> {
-  const res = await fetch(`${API_BASE}/api/navigation/places`, {
-    cache: "no-store",
-  });
-  return handleResponse<ApiResponse<PlacesResponseData>>(res);
+  return liveOrRecorded(
+    async () => {
+      const res = await fetch(`${API_BASE}/api/navigation/places`, { cache: "no-store" });
+      return handleResponse<ApiResponse<PlacesResponseData>>(res);
+    },
+    () => ({ success: true, message: "recorded",
+             data: { places: DEMO_PLACES } as unknown as PlacesResponseData }),
+  );
 }
 
 export async function initializeLocalization(): Promise<ApiResponse<LocalizationResponseData>> {
@@ -222,8 +286,13 @@ export type GraphRunData = {
 };
 
 export async function getCommandGraph(): Promise<ApiResponse<CommandGraphData>> {
-  const res = await fetch(`${API_BASE}/api/chat/graph`, { cache: "no-store" });
-  return handleResponse<ApiResponse<CommandGraphData>>(res);
+  return liveOrRecorded(
+    async () => {
+      const res = await fetch(`${API_BASE}/api/chat/graph`, { cache: "no-store" });
+      return handleResponse<ApiResponse<CommandGraphData>>(res);
+    },
+    () => ({ success: true, message: "recorded", data: DEMO_GRAPH_SHAPE }),
+  );
 }
 
 /**
@@ -233,12 +302,15 @@ export async function getCommandGraph(): Promise<ApiResponse<CommandGraphData>> 
 export async function sendGraphCommand(
   command: string,
 ): Promise<ApiResponse<GraphRunData>> {
-  const res = await fetch(`${API_BASE}/api/chat/graph-command`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
+  return liveOrRecorded(
+    async () => {
+      const res = await fetch(`${API_BASE}/api/chat/graph-command`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ command }),
+      });
+      return handleResponse<ApiResponse<GraphRunData>>(res);
     },
-    body: JSON.stringify({ command }),
-  });
-  return handleResponse<ApiResponse<GraphRunData>>(res);
+    () => ({ success: true, message: DEMO_RUN.answer, data: DEMO_RUN as GraphRunData }),
+  );
 }

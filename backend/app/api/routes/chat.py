@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.core.dependencies import (
@@ -10,7 +12,10 @@ from app.core.dependencies import (
 from app.models.schemas import BasicActionResponse, ChatCommandRequest
 from app.services.action_mapper import ActionMapper
 from app.services.intent_parser import IntentParser
-from app.services.ros2_bridge import ROS2Bridge
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # rclpy is absent on hosts without ROS
+    from app.services.ros2_bridge import ROS2Bridge
 from app.services.state_store import StateStore
 from app.services.command_graph import get_command_graph
 from app.services.vision_service import VisionService
@@ -23,7 +28,7 @@ def graph_command(
     payload: ChatCommandRequest,
     parser: IntentParser = Depends(get_intent_parser),
     mapper: ActionMapper = Depends(get_action_mapper),
-    bridge: ROS2Bridge = Depends(get_ros_bridge_dep),
+    bridge: "ROS2Bridge" = Depends(get_ros_bridge_dep),
     store: StateStore = Depends(get_state_store_dep),
     vision: VisionService = Depends(get_vision_service),
 ):
@@ -77,7 +82,7 @@ def chat_command(
     payload: ChatCommandRequest,
     parser: IntentParser = Depends(get_intent_parser),
     mapper: ActionMapper = Depends(get_action_mapper),
-    bridge: ROS2Bridge = Depends(get_ros_bridge_dep),
+    bridge: "ROS2Bridge" = Depends(get_ros_bridge_dep),
     store: StateStore = Depends(get_state_store_dep),
     vision: VisionService = Depends(get_vision_service),
 ):

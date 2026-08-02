@@ -1,8 +1,13 @@
+from __future__ import annotations
+
 from fastapi import APIRouter, Depends
 
 from app.core.dependencies import get_ros_bridge_dep, get_state_store_dep
 from app.models.schemas import BasicActionResponse, RobotStatusResponse, ScanSummaryResponse
-from app.services.ros2_bridge import ROS2Bridge
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # rclpy is absent on hosts without ROS
+    from app.services.ros2_bridge import ROS2Bridge
 from app.services.state_store import StateStore
 
 router = APIRouter(prefix="/api/robot", tags=["robot"])
@@ -10,7 +15,7 @@ router = APIRouter(prefix="/api/robot", tags=["robot"])
 
 @router.get("/status", response_model=RobotStatusResponse)
 def get_status(
-    bridge: ROS2Bridge = Depends(get_ros_bridge_dep),
+    bridge: "ROS2Bridge" = Depends(get_ros_bridge_dep),
     store: StateStore = Depends(get_state_store_dep),
 ):
     snapshot = store.get_summary()
@@ -31,7 +36,7 @@ def get_status(
 
 @router.get("/scan-summary", response_model=ScanSummaryResponse)
 def get_scan_summary(
-    bridge: ROS2Bridge = Depends(get_ros_bridge_dep),
+    bridge: "ROS2Bridge" = Depends(get_ros_bridge_dep),
 ):
     scan = bridge.get_scan_summary()
     return ScanSummaryResponse(**scan)
@@ -39,7 +44,7 @@ def get_scan_summary(
 
 @router.post("/stop", response_model=BasicActionResponse)
 def stop_robot(
-    bridge: ROS2Bridge = Depends(get_ros_bridge_dep),
+    bridge: "ROS2Bridge" = Depends(get_ros_bridge_dep),
     store: StateStore = Depends(get_state_store_dep),
 ):
     result = bridge.emergency_stop()
@@ -50,7 +55,7 @@ def stop_robot(
 
 @router.post("/capture", response_model=BasicActionResponse)
 def capture_frame(
-    bridge: ROS2Bridge = Depends(get_ros_bridge_dep),
+    bridge: "ROS2Bridge" = Depends(get_ros_bridge_dep),
     store: StateStore = Depends(get_state_store_dep),
 ):
     result = bridge.trigger_capture("manual_capture")

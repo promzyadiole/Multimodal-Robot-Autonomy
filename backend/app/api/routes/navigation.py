@@ -5,7 +5,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.core.dependencies import get_environment_service_dep, get_ros_bridge_dep
 from app.models.schemas import BasicActionResponse
 from app.services.environment_service import EnvironmentService
-from app.services.ros2_bridge import ROS2Bridge
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # rclpy is absent on hosts without ROS
+    from app.services.ros2_bridge import ROS2Bridge
 
 router = APIRouter(prefix="/api/navigation", tags=["navigation"])
 
@@ -28,7 +31,7 @@ def list_places(
 @router.post("/go-to/{place_name}", response_model=BasicActionResponse)
 def go_to_place(
     place_name: str,
-    bridge: ROS2Bridge = Depends(get_ros_bridge_dep),
+    bridge: "ROS2Bridge" = Depends(get_ros_bridge_dep),
     env_service: EnvironmentService = Depends(get_environment_service_dep),
 ) -> BasicActionResponse:
     try:

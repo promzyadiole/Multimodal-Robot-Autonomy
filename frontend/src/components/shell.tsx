@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Sidebar from "@/components/sidebar";
+import DataSourceBanner from "@/components/data-source-banner";
 
 /**
  * The landing page is the entry point and runs full-bleed; every other
@@ -21,9 +22,12 @@ export default function Shell({ children }: { children: React.ReactNode }) {
       <aside className="w-64 shrink-0 border-r border-rule bg-panel">
         <Sidebar />
       </aside>
-      <main className="min-w-0 flex-1 overflow-x-auto p-4 md:p-6">
-        <div className="mx-auto w-full max-w-6xl">{children}</div>
-      </main>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <DataSourceBanner />
+        <main className="min-w-0 flex-1 overflow-x-auto p-4 md:p-6">
+          <div className="mx-auto w-full max-w-6xl">{children}</div>
+        </main>
+      </div>
     </div>
   );
 }

@@ -46,15 +46,56 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any
+
 from app.services.action_mapper import ActionMapper, get_action_mapper
 from app.services.environment_service import EnvironmentService, get_environment_service
 from app.services.intent_parser import IntentParser, get_intent_parser
-from app.services.ros2_bridge import ROS2Bridge, get_ros2_bridge
 from app.services.state_store import StateStore, get_state_store
 from app.services.vision_service import VisionService, get_vision_service
 
+if TYPE_CHECKING:  # pragma: no cover
+    from app.services.ros2_bridge import ROS2Bridge
 
-def get_ros_bridge_dep() -> ROS2Bridge:
+
+# The ROS bridge is imported lazily so the service can start on a host with no
+# ROS installation. That is not a hypothetical: Gazebo, ROS 2 and the perception
+# models need a persistent machine, while the language and retrieval half is
+# ordinary Python that deploys anywhere. Importing rclpy at module scope
+# coupled the two, so a cloud deployment of the reasoning half was impossible.
+#
+# Routes that genuinely need the robot raise a clear 503 instead of failing at
+# import time with a stack trace about a missing shared library.
+
+ROS_AVAILABLE: bool | None = None
+
+
+def ros_is_available() -> bool:
+    global ROS_AVAILABLE
+    if ROS_AVAILABLE is None:
+        try:
+            import rclpy  # noqa: F401
+            ROS_AVAILABLE = True
+        except Exception:  # noqa: BLE001
+            ROS_AVAILABLE = False
+    return ROS_AVAILABLE
+
+
+def get_ros_bridge_dep() -> "ROS2Bridge":
+    if not ros_is_available():
+        from fastapi import HTTPException
+
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "No ROS 2 runtime on this host, so the robot is not reachable. "
+                "The language, retrieval and graph endpoints work; navigation, "
+                "teleoperation and vision need the simulator, which runs on a "
+                "persistent machine rather than here."
+            ),
+        )
+    from app.services.ros2_bridge import get_ros2_bridge
+
     return get_ros2_bridge()
 
 
