@@ -17,6 +17,12 @@
   --color-scan-hot: #5fe0d2;
   --color-signal: #e8a33d;
 
+  /* Diagram tones. --color-rule is a hairline for panel edges and is far too
+     dark to carry a drawing; these read clearly against the plotted ground. */
+  --color-hairline: #33475a;
+  --color-node: #18222c;
+  --color-node-on: #12313a;
+
   --font-display: var(--font-instrument), Georgia, serif;
   --font-body: var(--font-archivo), system-ui, sans-serif;
   --font-data: var(--font-jetbrains), ui-monospace, monospace;
@@ -48,6 +54,14 @@ body {
   background-size: 40px 40px;
   -webkit-mask-image: radial-gradient(ellipse 85% 65% at 50% 35%, #000 35%, transparent 100%);
   mask-image: radial-gradient(ellipse 85% 65% at 50% 35%, #000 35%, transparent 100%);
+}
+
+/* The graph sits on a plotted surface: a faint dot lattice, so the drawing
+   has something to sit on and the panel edge is unambiguous. */
+.graph-canvas {
+  background-image: radial-gradient(rgba(63, 191, 179, 0.10) 1px, transparent 1px);
+  background-size: 22px 22px;
+  background-position: -1px -1px;
 }
 
 /* One scan sweep across the hero on load — a single orchestrated

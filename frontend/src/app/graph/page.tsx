@@ -39,6 +39,8 @@ type Edge = {
   /** where the label sits */
   lx?: number;
   ly?: number;
+  /** degrees, for labels that run along a vertical segment */
+  rotate?: number;
 };
 
 const EDGES: Edge[] = [
@@ -85,12 +87,14 @@ const EDGES: Edge[] = [
     ly: 348,
   },
   {
+    // routed wide of the column so the label does not sit on the verify box
     from: "recover",
     to: "navigate",
-    d: "M84 368 L52 368 L52 200 L82 200",
+    d: "M84 368 L38 368 L38 200 L82 200",
     label: "retry once",
-    lx: 58,
-    ly: 288,
+    lx: 26,
+    ly: 284,
+    rotate: -90,
   },
   { from: "move", to: "answer", d: "M496 220 Q496 400 388 442" },
   { from: "answer", to: "DONE", d: "M320 472 L320 494" },
@@ -198,13 +202,17 @@ export default function GraphPage() {
 
       <div className="grid gap-6 xl:grid-cols-[1fr_23rem]">
         {/* ---- the graph ---- */}
-        <section className="self-start overflow-x-auto rounded-sm border border-rule bg-panel p-4">
-          <svg
-            viewBox="0 0 640 520"
-            className="h-auto w-full min-w-[560px]"
-            role="img"
-            aria-label="LangGraph command graph"
-          >
+        <section className="self-start rounded-sm border border-rule bg-panel p-4">
+          {/* The diagram sits on its own inset surface. Drawing it straight onto
+              the panel left the nodes almost the same value as their background;
+              and it is width-capped so it does not balloon on a wide display. */}
+          <div className="graph-canvas overflow-x-auto rounded-sm border border-rule bg-ground px-4 py-6">
+            <svg
+              viewBox="0 0 640 520"
+              className="mx-auto h-auto w-full max-w-[760px] min-w-[560px]"
+              role="img"
+              aria-label="LangGraph command graph"
+            >
             <defs>
               <marker
                 id="arrow"
@@ -215,7 +223,7 @@ export default function GraphPage() {
                 markerHeight="6"
                 orient="auto-start-reverse"
               >
-                <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--color-rule)" />
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--color-hairline)" />
               </marker>
               <marker
                 id="arrow-hot"
@@ -242,8 +250,8 @@ export default function GraphPage() {
                   <path
                     d={e.d}
                     fill="none"
-                    stroke={hot ? "var(--color-scan)" : "var(--color-rule)"}
-                    strokeWidth={hot ? 2 : 1.25}
+                    stroke={hot ? "var(--color-scan)" : "var(--color-hairline)"}
+                    strokeWidth={hot ? 2.25 : 1.5}
                     markerEnd={hot ? "url(#arrow-hot)" : "url(#arrow)"}
                   />
                   {e.label ? (
@@ -252,8 +260,9 @@ export default function GraphPage() {
                       y={e.ly}
                       textAnchor="middle"
                       className="font-data"
-                      fontSize="9.5"
-                      fill={hot ? "var(--color-scan)" : "var(--color-muted)"}
+                      fontSize="10"
+                      transform={e.rotate ? `rotate(${e.rotate} ${e.lx} ${e.ly})` : undefined}
+                      fill={hot ? "var(--color-scan)" : "var(--color-ink-soft)"}
                     >
                       {e.label}
                     </text>
@@ -275,10 +284,21 @@ export default function GraphPage() {
                     width={NODE_W}
                     height={NODE_H + 14}
                     rx="3"
-                    fill={on ? "var(--color-panel-2)" : "var(--color-ground)"}
-                    stroke={on ? "var(--color-scan)" : "var(--color-rule)"}
-                    strokeWidth={on ? 1.5 : 1}
+                    fill={on ? "var(--color-node-on)" : "var(--color-node)"}
+                    stroke={on ? "var(--color-scan)" : "var(--color-hairline)"}
+                    strokeWidth={on ? 1.75 : 1.25}
                   />
+                  {/* a left rail marks a node the run passed through, so the
+                      route reads even for a viewer who cannot separate the hues */}
+                  {on ? (
+                    <rect
+                      x={n.x - NODE_W / 2}
+                      y={n.y - NODE_H / 2}
+                      width="2.5"
+                      height={NODE_H + 14}
+                      fill="var(--color-scan)"
+                    />
+                  ) : null}
                   <text
                     x={n.x}
                     y={n.y + 1}
@@ -294,8 +314,8 @@ export default function GraphPage() {
                     y={n.y + 15}
                     textAnchor="middle"
                     className="font-data"
-                    fontSize="8.5"
-                    fill="var(--color-muted)"
+                    fontSize="9"
+                    fill={on ? "var(--color-ink-soft)" : "var(--color-muted)"}
                   >
                     {n.sub}
                   </text>
@@ -314,16 +334,21 @@ export default function GraphPage() {
                 </g>
               );
             })}
-          </svg>
+            </svg>
+          </div>
 
           {path.length > 0 ? (
-            <p className="mt-3 border-t border-rule pt-3 font-data text-[11px] text-muted">
+            <p className="mt-4 border-t border-rule pt-3 font-data text-[11px] leading-relaxed text-muted">
               route taken:{" "}
               <span className="text-scan">{path.join(" → ")}</span>
             </p>
           ) : (
-            <p className="mt-3 border-t border-rule pt-3 font-data text-[11px] text-muted">
-              run a command to light up the route it takes
+            <p className="mt-4 flex items-center gap-2 border-t border-rule pt-3 font-data text-[11px] text-muted">
+              <span
+                className="inline-block h-2.5 w-2.5 shrink-0 rounded-[2px] border border-scan bg-node-on"
+                aria-hidden="true"
+              />
+              nodes and edges light up in this colour along the route a run took
             </p>
           )}
         </section>
@@ -446,9 +471,9 @@ function Terminal({
         width={w}
         height={h}
         rx={h / 2}
-        fill={active ? "var(--color-scan)" : "var(--color-ground)"}
-        stroke={active ? "var(--color-scan)" : "var(--color-rule)"}
-        strokeWidth="1"
+        fill={active ? "var(--color-scan)" : "var(--color-node)"}
+        stroke={active ? "var(--color-scan)" : "var(--color-hairline)"}
+        strokeWidth="1.25"
       />
       <text
         x={x}
@@ -456,7 +481,7 @@ function Terminal({
         textAnchor="middle"
         className="font-data"
         fontSize="10.5"
-        fill={active ? "var(--color-ground)" : "var(--color-muted)"}
+        fill={active ? "var(--color-ground)" : "var(--color-ink-soft)"}
       >
         {text}
       </text>
