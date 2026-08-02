@@ -18,8 +18,12 @@ type Live = {
 const MEASURED = [
   { k: "scan match to map", v: "92.5%", n: "within 10 cm, median error 0.050 m" },
   { k: "robot footprint", v: "0.521 × 0.608 m", n: "modelled as a polygon, not a circle" },
-  { k: "named destinations", v: "7", n: "resolved from language, not coordinates" },
-  { k: "goal accuracy", v: "0.16 – 0.30 m", n: "final error across verified runs" },
+  { k: "language understood", v: "54 / 54", n: "varied phrasings resolved to the right place" },
+  {
+    k: "reported vs actual arrival",
+    v: "22% → 6%",
+    n: "54 commands, scored against ground truth: 10 of 12 reported successes were false",
+  },
 ];
 
 export default function LandingPage() {
@@ -163,7 +167,7 @@ export default function LandingPage() {
               aria-hidden="true"
             />
             <span className="text-muted">
-              {live.reachable ? "system online" : "system offline"}
+              {live.reachable ? "recorded run · no robot connected" : "system offline"}
             </span>
           </span>
 
@@ -233,10 +237,11 @@ export default function LandingPage() {
           />
           <Card
             index="03"
-            title="The thesis"
-            body="The written work behind this system, and a retrieval layer to query its ideas directly."
-            cta="In preparation"
-            muted
+            title="See how it decided"
+            body="Every command runs through a LangGraph state machine. The route it took, each branch and why, is recorded and drawn."
+            cta="Open the graph"
+            href="/graph"
+
           />
         </div>
       </section>
