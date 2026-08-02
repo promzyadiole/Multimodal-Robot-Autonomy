@@ -66,9 +66,11 @@ export default function LandingPage() {
         <div className="scanline" aria-hidden="true" />
 
         <div className="rise flex flex-wrap items-center gap-3 font-data text-[11px] tracking-[0.2em] text-muted uppercase">
-          <span>Cyber-Physical Systems · Leoben</span>
+          <span>Personal project</span>
           <span className="text-rule">/</span>
-          <span>ARMAC · Marie &amp; Louis Pasteur</span>
+          <span>Language-grounded autonomy</span>
+          <span className="text-rule">/</span>
+          <span>ROS&nbsp;2 · LangGraph</span>
         </div>
 
         <div className="mt-8 grid items-end gap-10 md:grid-cols-[1.35fr_0.65fr]">
@@ -262,31 +264,19 @@ export default function LandingPage() {
       {/* ---------------- footer ---------------- */}
       <footer className="relative mx-auto mt-20 max-w-[1180px] px-6 pb-16">
         <div className="flex flex-wrap items-center justify-between gap-6 border-t border-rule pt-8">
-          <p className="max-w-md text-[12.5px] leading-relaxed text-muted">
-            Built on ROS&nbsp;2 Humble and Gazebo. Supervised by Prof. Elmar Rückert and
-            Nwankwo Linus, PhD.
+          <p className="max-w-lg text-[12.5px] leading-relaxed text-muted">
+            A personal project by Promise Adiole. Built on ROS&nbsp;2 Humble and
+            Gazebo, using ROMR, an open-source mobile robot. The findings here are
+            my own and represent no institution.
           </p>
-          {/* Institutional marks are dark artwork; they sit on their own light
-              plate rather than being inverted, so the colours stay intact. */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-5 rounded-sm bg-ink/95 px-5 py-3">
-              <Image
-                src="/logo-1.png"
-                alt="Cyber-Physical Systems"
-                width={92}
-                height={28}
-                className="h-[28px] w-auto"
-              />
-              <span className="h-6 w-px bg-ground/15" aria-hidden="true" />
-              <Image
-                src="/logo-2.png"
-                alt="Université Marie et Louis Pasteur"
-                width={128}
-                height={28}
-                className="h-[28px] w-auto"
-              />
-            </div>
-          </div>
+          <a
+            href="https://github.com/promzyadiole/Multimodal-Robot-Autonomy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-data text-[12px] text-scan transition-colors hover:text-scan-hot"
+          >
+            source on github →
+          </a>
         </div>
       </footer>
     </div>

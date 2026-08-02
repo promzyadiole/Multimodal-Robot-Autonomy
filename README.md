@@ -893,7 +893,6 @@ It demonstrates how to build a robotics system that is:
 
 It is a strong foundation for:
 
-- thesis demonstrations
 - embodied AI prototypes
 - human-robot interaction experiments
 - multimodal robotics research
@@ -982,9 +981,11 @@ MIT License
 
 ## 🙌 Acknowledgments
 
+A personal project. The findings here are my own and represent no institution.
+
 Special thanks to:
 
-- supervisors and research mentors
+- the ROMR authors, whose open-source mobile robot this builds on
 - the ROS 2 and Nav2 communities
 - the open-source perception ecosystem
 - the multimodal AI community

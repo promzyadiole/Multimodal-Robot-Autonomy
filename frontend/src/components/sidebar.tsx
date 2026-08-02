@@ -112,25 +112,8 @@ export default function Sidebar() {
           </div>
           <div className="min-w-0">
             <p className="truncate text-[13px] text-ink">Promise Adiole</p>
-            <p className="font-data text-[10px] text-muted">CPS Leoben · ARMAC</p>
+            <p className="font-data text-[10px] text-muted">personal project</p>
           </div>
-        </div>
-        <div className="mt-3 flex items-center gap-3 rounded-sm bg-ink/95 px-3 py-2">
-          <Image
-            src="/logo-1.png"
-            alt="Cyber-Physical Systems"
-            width={70}
-            height={20}
-            className="h-[20px] w-auto"
-          />
-          <span className="h-4 w-px bg-ground/15" aria-hidden="true" />
-          <Image
-            src="/logo-2.png"
-            alt="Université Marie et Louis Pasteur"
-            width={92}
-            height={20}
-            className="h-[20px] w-auto"
-          />
         </div>
       </div>
     </div>
