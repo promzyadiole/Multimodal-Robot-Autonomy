@@ -1,9 +1,11 @@
 # 🤖 Multimodal-Robot-Autonomy
 
-[![Multimodal Robot Autonomy UI Overview](docs/images/spawned_robot.png)](https://promzyadiole.github.io/Language-Vision-Grounded-Robot-Autonomy/demo/)
+![Reported success against measured arrival](docs/images/belief_vs_truth.png)
 
 <p align="center">
-  <strong><a href="https://promzyadiole.github.io/Language-Vision-Grounded-Robot-Autonomy/demo/">▶ Watch Demo Video</a></strong>
+  <em>Every trial, placed at the error the robot <strong>believed</strong> it had against the
+  error <strong>measured</strong> against ground truth. Points on the dashed diagonal are honest
+  estimates. The filled points are goals nav2 reported as reached.</em>
 </p>
 
 <p align="center">
@@ -13,7 +15,9 @@
 </p>
 
 <p align="center">
-  <em>A personal project. Builds on <a href="https://github.com/promzyadiole/Language-Vision-Grounded-Robot-Autonomy">Language-Vision-Grounded-Robot-Autonomy</a>, extending it to spawn and navigate a custom robot.</em>
+  <em>A personal project. Builds on <a href="https://github.com/promzyadiole/Language-Vision-Grounded-Robot-Autonomy">Language-Vision-Grounded-Robot-Autonomy</a>, extending it to spawn and navigate a custom robot. That project has its own
+  <a href="https://promzyadiole.github.io/Language-Vision-Grounded-Robot-Autonomy/demo/">demo video</a>,
+  which shows the earlier system on a different robot and world — not the one documented here.</em>
 </p>
 
 ---
@@ -43,7 +47,7 @@ for the per-trial data and `scripts/plot_validation.py` for the figure.
   <img src="https://img.shields.io/badge/Nav2-Navigation-1E88E5?style=for-the-badge" alt="Nav2 Navigation" />
   <img src="https://img.shields.io/badge/SAM%20%2B%20CLIP-Vision-orange?style=for-the-badge" alt="SAM + CLIP Vision" />
   <img src="https://img.shields.io/badge/Gazebo-Simulation-6A1B9A?style=for-the-badge" alt="Gazebo Simulation" />
-  <img src="https://img.shields.io/badge/TurtleBot3-Waffle%20Pi-4CAF50?style=for-the-badge" alt="TurtleBot3 Waffle Pi" />
+  <img src="https://img.shields.io/badge/Robot-ROMR-4CAF50?style=for-the-badge" alt="ROMR differential drive" />
 </p>
 
 ---
@@ -172,6 +176,14 @@ The user interface includes dedicated pages for:
 
 <p align="center">
   <img src="docs/images/architecture-overview.png" alt="System Architecture Overview" width="100%" />
+</p>
+
+![The LangGraph command policy](docs/images/command_graph.png)
+
+<p align="center">
+  <em>The command policy. The navigate → verify → recover → navigate cycle is why it is a
+  graph rather than a script: <code>verify</code> waits for the real outcome instead of
+  assuming one.</em>
 </p>
 
 ### High-Level Flow
