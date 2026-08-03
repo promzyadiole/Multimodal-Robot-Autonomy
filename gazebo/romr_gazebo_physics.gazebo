@@ -22,6 +22,37 @@
 <xacro:property name="wheels_friction" value="1.5" />
 
 <!--
+  Contact parameters. None of these were set, so ODE used its defaults, and one
+  of those defaults was doing real damage.
+
+  maxVel is the contact CORRECTION velocity: when two bodies interpenetrate, ODE
+  pushes them apart, capped at this speed. Its default is 0.01 m/s. The robot
+  was measured creeping at a dead-constant 0.0106 m/s for 40 s (371 mm) and
+  then stopping outright. That is not friction and not a command; it is ODE
+  resolving a persistent overlap at exactly the capped rate. Setting maxVel to 0
+  removes the corrective shove and lets the contact spring do the work.
+
+  minDepth is the penetration ODE tolerates before correcting at all. A small
+  allowance stops a resting wheel from being nudged every step by numerical
+  noise.
+
+  kp/kd are contact stiffness and damping. The default kp is 1e12, which is
+  effectively rigid and makes the solver ring; 1e6 with kd 100 is the value used
+  across ROS wheeled platforms and settles cleanly at this mass (8.4 kg).
+-->
+<xacro:property name="contact_kp" value="1000000.0" />
+<xacro:property name="contact_kd" value="100.0" />
+<xacro:property name="contact_min_depth" value="0.001" />
+<xacro:property name="contact_max_vel" value="0.0" />
+
+<xacro:macro name="contact_params">
+  <kp>${contact_kp}</kp>
+  <kd>${contact_kd}</kd>
+  <minDepth>${contact_min_depth}</minDepth>
+  <maxVel>${contact_max_vel}</maxVel>
+</xacro:macro>
+
+<!--
   selfCollide was true on the body and both wheels. The base_link mesh spans
   y +/-0.173 and the wheels mount at y +/-0.185, so their collision geometry
   interpenetrates and ODE generates continuous contact forces between parts of
@@ -32,6 +63,7 @@
 <gazebo reference="base_link">
   <mu1>${standard_friction}</mu1>
   <mu2>${standard_friction}</mu2>
+  <xacro:contact_params />
   <selfCollide>false</selfCollide>
   <gravity>true</gravity>
 </gazebo>
@@ -39,24 +71,28 @@
 <gazebo reference="rightwheel_link">
   <mu1>${wheels_friction}</mu1>
   <mu2>${wheels_friction}</mu2>
+  <xacro:contact_params />
   <selfCollide>false</selfCollide>
 </gazebo>
 
 <gazebo reference="leftwheel_link">
   <mu1>${wheels_friction}</mu1>
   <mu2>${wheels_friction}</mu2>
+  <xacro:contact_params />
   <selfCollide>false</selfCollide>
 </gazebo>
 
 <gazebo reference="rearcaster_link">
   <mu1>${caster_friction}</mu1>
   <mu2>${caster_friction}</mu2>
+  <xacro:contact_params />
   <selfCollide>false</selfCollide>
 </gazebo>
 
 <gazebo reference="casterwheel_link">
   <mu1>${caster_friction}</mu1>
   <mu2>${caster_friction}</mu2>
+  <xacro:contact_params />
   <selfCollide>false</selfCollide>
 </gazebo>
 

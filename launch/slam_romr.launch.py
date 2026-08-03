@@ -91,14 +91,19 @@ def generate_launch_description():
         # spawns wedged against geometry there: it reaches ~6% of commanded speed
         # and yaws 10 deg on a straight command, which reads as a broken
         # drivetrain. Backed out by hand it does 93-108%. This is the pose
-        # Open floor, chosen by measuring the map: 2.50 m clearance to the
-        # nearest wall and 6.31 m to the nearest world object. The old spawn
-        # (-2.0, -1.0) settles 0.69 m from wooden_case_1, against a 0.67 m
-        # contact threshold for this footprint -- the robot spawned touching the
-        # crate, facing it, and reached 6-11% of commanded speed while yawing
-        # 10-15 deg on a straight command. On open floor it does 99%.
-        DeclareLaunchArgument('x_pose', default_value='-4.27'),
-        DeclareLaunchArgument('y_pose', default_value='6.17'),
+        # Inside the building, on open floor. Chosen by flooding outward from
+        # the parlour through gaps wider than 0.45 m, which cannot escape the
+        # 0.30 m leak in the map perimeter, then taking the most open cell:
+        # 1.35 m to the nearest wall and 3.28 m to the nearest world object.
+        #
+        # (-2.0, -1.0) settled 0.69 m from wooden_case_1 against a 0.67 m
+        # contact threshold, so the robot spawned touching the crate and every
+        # forward command ground into it: 6-11% of commanded speed with 10-15
+        # degrees of yaw error. (-4.27, 6.17) was open but OUTSIDE the house --
+        # the map's free space leaks into the driveway, which is the same defect
+        # that let the planner drive the robot out of the surveyed area.
+        DeclareLaunchArgument('x_pose', default_value='-2.92'),
+        DeclareLaunchArgument('y_pose', default_value='-3.43'),
         DeclareLaunchArgument('z_pose', default_value='0.20'),
         gazebo_model_path,
         gazebo,
