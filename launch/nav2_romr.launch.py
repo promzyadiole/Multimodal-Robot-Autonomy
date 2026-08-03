@@ -3,8 +3,10 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
 
@@ -36,11 +38,32 @@ def generate_launch_description():
         }.items(),
     )
 
+    # RViz is launched here rather than as a separate command so it shares this
+    # launch's environment. It is the only way to set the initial pose by hand
+    # ("2D Pose Estimate"), and the only view of the inflated costmap the
+    # planner actually searches -- which is what a "failed to create plan"
+    # message is really about.
+    rviz = Node(
+        package="rviz2",
+        executable="rviz2",
+        name="rviz2",
+        arguments=["-d", os.path.join(pkg_share, "rviz", "navigation.rviz")],
+        parameters=[{"use_sim_time": use_sim_time}],
+        output="screen",
+        condition=IfCondition(LaunchConfiguration("rviz")),
+    )
+
     return LaunchDescription([
         DeclareLaunchArgument(
             "map",
             default_value="custom_map_v2.yaml",
             description="Map file under the package's maps/ directory",
         ),
+        DeclareLaunchArgument(
+            "rviz",
+            default_value="false",
+            description="Open RViz for setting the initial pose and sending goals by hand",
+        ),
         nav2_launch,
+        rviz,
     ])

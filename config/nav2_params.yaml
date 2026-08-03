@@ -1,16 +1,24 @@
 amcl:
   ros__parameters:
     use_sim_time: true
-    # Odometry noise model. These were 0.2, which tells AMCL the odometry
-    # is unreliable, so it inflates the particle spread on every motion and
-    # never converges: sigma stayed at 1.4 m after driving. This plugin
-    # publishes world-referenced odometry measured at 0.06% scale error and
-    # 0.08 deg of yaw error per revolution, so the spread was being driven
-    # by noise the robot does not have.
-    alpha1: 0.05
-    alpha2: 0.05
-    alpha3: 0.05
-    alpha4: 0.05
+    # Odometry noise model, split by motion type because this robot's two
+    # motions are not equally trustworthy.
+    #
+    # Straight-line odometry is genuinely excellent: 0.06% scale error
+    # measured over the world. Rotation is not. The casters are fixed, not
+    # swivelling, so turning drags them sideways across the floor and scrubs
+    # 180-220 mm per rotation. The wheel encoders never see that scrub, so
+    # reported yaw and actual yaw part company every time the robot turns.
+    #
+    # A flat 0.05 across all five told the filter that rotation was almost
+    # noise-free, so it refused to let the scan match pull yaw back. Errors
+    # accumulated through every nav2 recovery spin until the estimate was
+    # 166 deg out. alpha1 and alpha2 govern rotational noise and are now set
+    # to admit the scrub; alpha3-5 stay low because translation earns it.
+    alpha1: 0.25   # rotation noise from rotation  <- the scrubbing one
+    alpha2: 0.25   # rotation noise from translation
+    alpha3: 0.05   # translation noise from translation
+    alpha4: 0.05   # translation noise from rotation
     alpha5: 0.05
     base_frame_id: "base_link"
     odom_frame_id: "odom"
@@ -27,6 +35,20 @@ amcl:
     update_min_d: 0.25
     update_min_a: 0.2
     resample_interval: 1
+    # Divergence recovery. Both default to 0.0, which disables it entirely:
+    # once the filter is wrong it has no mechanism to ever become right
+    # again, because every particle it resamples is drawn from the same bad
+    # cluster. That is what happened here -- a 5.55 m error that would have
+    # persisted for the rest of the session.
+    #
+    # These two are exponential averages of the particle weights, one slow
+    # one fast. When the fast average drops well below the slow one, the
+    # scan has stopped matching where the filter is looking, and AMCL
+    # injects random particles elsewhere on the map so a correct hypothesis
+    # can be found. The cost is a little jitter in normal operation, which
+    # is worth paying to not be permanently lost.
+    recovery_alpha_slow: 0.001
+    recovery_alpha_fast: 0.1
     laser_min_range: 0.15
     # The scanner reaches 16 m and the building is 13.9 m across, so an 8 m
     # cutoff discarded exactly the long returns that pin position down along
