@@ -63,3 +63,7 @@ thesis/
 # Vercel link metadata
 .vercel/
 
+
+# tf2_tools view_frames output
+frames_*.gv
+frames_*.pdf

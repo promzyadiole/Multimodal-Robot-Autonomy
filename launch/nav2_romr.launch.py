@@ -39,13 +39,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument(
             "map",
-            # custom_map_sealed.yaml is custom_map with its outer boundary closed.
-            # SLAM left the perimeter open, so free space ran off the edge of the
-            # grid and nav2 would plan a route out of the surveyed area; outside
-            # it the scan matches nothing and AMCL diverged (measured 13.7 m)
-            # while still reporting the goal succeeded. Interior geometry is
-            # identical, and all seven destinations remain reachable.
-            default_value="custom_map_sealed.yaml",
+            default_value="custom_map_v2.yaml",
             description="Map file under the package's maps/ directory",
         ),
         nav2_launch,

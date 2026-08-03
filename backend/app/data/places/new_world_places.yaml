@@ -1,73 +1,112 @@
-# Named destinations for worlds/new_world.world, taken from the places
-# dictionary in Language-Grounded-Robot-Autonomy
-# (backend/app/data/robot_actions.yaml).
-#
-# Those poses are expressed in that map's ORIGINAL SLAM frame, which sits a
-# quarter turn from the Gazebo world frame. maps/custom_map has since been
-# re-georeferenced to the world, so each pose is converted here with
-#     world = R(+90 deg) * (pose_old - [0.3416, -5.9101]),  yaw += 90 deg
-# Untransformed, 4 of the 7 fell outside the map entirely; transformed, all 7
-# sit in free space reachable from the spawn pose (clearances 0.45-1.55 m).
-
-environment: new_world
-frame_id: map
-
 places:
   parlour:
-    x: -5.9101
-    y: -3.3416
+    x: -4.5742
+    y: -1.0034
     z: 0.0
-    qz: -0.707670
-    qw: 0.706543
-    aliases: ['parlour', 'living room', 'lounge', 'sitting room']
-
+    qz: 0.980983
+    qw: 0.194092
+    aliases:
+    - parlour
+    - living room
+    - lounge
+    - sitting room
+    - living area
   kitchen:
-    x: -8.9101
-    y: -4.3416
+    x: -5.0793
+    y: 1.9436
     z: 0.0
-    qz: -0.707670
-    qw: 0.706543
-    aliases: ['kitchen']
-
+    qz: 0.891571
+    qw: 0.452881
+    aliases:
+    - kitchen
+    - the kitchen
+    - cooking area
+    - "k\xFCche"
+  waiting_area:
+    x: -0.0518
+    y: 0.432
+    z: 0.0
+    qz: -0.992456
+    qw: 0.122602
+    aliases:
+    - waiting_area
+    - visitors waiting area
+    - visitor waiting area
+    - waiting area
+    - the waiting area
+    - visitors area
+    - reception
+    - lobby
   dining_room:
-    x: -8.9101
-    y: 7.6584
+    x: 5.6325
+    y: 1.5407
     z: 0.0
-    qz: 1.000000
-    qw: 0.000398
-    aliases: ['dining room', 'dining area']
-    metadata: {'capture_on_arrival': True}
-
+    qz: -0.350264
+    qw: 0.936651
+    aliases:
+    - dining_room
+    - dining room
+    - the dining room
+    - dining area
+    - dining
+    - dinner table
   master_bedroom:
-    x: -2.9101
-    y: 7.6584
+    x: 5.1568
+    y: -2.1403
     z: 0.0
-    qz: 1.000000
-    qw: 0.000398
-    aliases: ['master bedroom', 'bedroom']
-
+    qz: -0.783181
+    qw: 0.621794
+    aliases:
+    - master_bedroom
+    - master bedroom
+    - the master bedroom
+    - bedroom
+    - the bedroom
+    - main bedroom
+    - master room
   garage:
-    x: -0.4101
-    y: 2.8584
+    x: 0.3124
+    y: -6.4615
     z: 0.0
-    qz: 0.000398
-    qw: 1.000000
-    aliases: ['garage']
-    metadata: {'capture_on_arrival': True}
-
+    qz: 0.014184
+    qw: 0.999899
+    aliases:
+    - garage
+    - the garage
+    - car park
+    - parking
+    - parking space
+    - car area
   store_area:
-    x: -0.4101
-    y: -3.3416
+    x: -3.9059
+    y: -6.2149
     z: 0.0
-    qz: -0.707670
-    qw: 0.706543
-    aliases: ['store area', 'store', 'storage', 'storage area', 'store room']
-    metadata: {'capture_on_arrival': True}
-
+    qz: 0.998641
+    qw: 0.052123
+    aliases:
+    - store_area
+    - store area
+    - the store area
+    - storage
+    - the storage
+    - storage area
+    - store room
+    - storeroom
+    - the store
   home:
-    x: -5.8533
-    y: -0.2812
+    x: -3.5378
+    y: -2.6976
     z: 0.0
-    qz: 0.706895
-    qw: 0.707319
-    aliases: ['home', 'start', 'origin', 'base', 'home base', 'back home']
+    qz: 0.463382
+    qw: 0.886159
+    aliases:
+    - home
+    - home base
+    - base
+    - start
+    - origin
+    - go home
+    - the base
+    - home position
+    - docking station
+    - dock

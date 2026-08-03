@@ -55,22 +55,30 @@ def believed() -> tuple[float, float, float]:
 
     rclpy.init()
     node = rclpy.create_node("record_place")
+    # TF stamps are simulation time. Without use_sim_time the node compares them
+    # against the wall clock, every lookup falls outside the buffer, and the
+    # transform appears to be missing when it is being published perfectly well.
+    node.set_parameters([rclpy.parameter.Parameter(
+        "use_sim_time", rclpy.Parameter.Type.BOOL, True)])
     buf = Buffer()
     TransformListener(buf, node)
-    deadline = time.time() + 10.0
-    tr = None
+    deadline = time.time() + 20.0
+    tr, last_err = None, "no attempt made"
     while time.time() < deadline:
         rclpy.spin_once(node, timeout_sec=0.2)
         try:
             tr = buf.lookup_transform("map", "base_link", rclpy.time.Time(),
-                                      timeout=Duration(seconds=0.5))
+                                      timeout=Duration(seconds=1.0))
             break
-        except Exception:  # noqa: BLE001
+        except Exception as exc:  # noqa: BLE001
+            last_err = str(exc)
             continue
     rclpy.shutdown()
     if tr is None:
         raise SystemExit(
-            "No map -> base_link transform. Is nav2 (or SLAM) running and localised?"
+            "No map -> base_link transform after 20 s.\n"
+            f"  last error: {last_err}\n"
+            "  Is nav2 running and has AMCL been given an initial pose?"
         )
     t, q = tr.transform.translation, tr.transform.rotation
     yaw = math.atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.y * q.y + q.z * q.z))
@@ -101,6 +109,8 @@ def main() -> int:
     ap.add_argument("--list", action="store_true", help="show the current registry")
     ap.add_argument("--force", action="store_true",
                     help="record even if belief and truth disagree")
+    ap.add_argument("--from-truth", action="store_true",
+                    help="take the pose from Gazebo instead of TF (see below)")
     args = ap.parse_args()
 
     path = Path(args.registry)
@@ -113,6 +123,35 @@ def main() -> int:
             yaw = 2 * math.atan2(p.get("qz", 0.0), p.get("qw", 1.0))
             print(f"{n:18} {p['x']:8.3f} {p['y']:8.3f} {yaw:8.3f}   "
                   f"{', '.join(p.get('aliases') or [])}")
+        return 0
+
+    # --from-truth exists because AMCL here stops publishing map -> odom
+    # intermittently, which makes the TF route unusable for minutes at a time.
+    # It is only sound because this map's frame coincides with the world frame:
+    # every place recorded through TF so far agreed with Gazebo to within 8-29 mm.
+    # That equivalence is re-checked below whenever TF is available, and the tool
+    # says so if it ever stops holding.
+    if args.from_truth:
+        t = truth()
+        if t is None:
+            raise SystemExit("Gazebo is not running, so there is no ground truth to read.")
+        bx, by, byaw = t
+        print(f"  from Gazebo ground truth : {bx:+.3f}, {by:+.3f}  yaw {math.degrees(byaw):+.1f}°")
+        print("  (map frame and world frame coincide for this map)")
+        existing = places.get(args.name, {})
+        aliases = list(dict.fromkeys((existing.get("aliases") or []) + args.alias))
+        if args.name not in aliases:
+            aliases.insert(0, args.name)
+        places[args.name] = {
+            "x": round(bx, 4), "y": round(by, 4), "z": 0.0,
+            "qz": round(math.sin(byaw / 2), 6), "qw": round(math.cos(byaw / 2), 6),
+            "aliases": aliases,
+            **({"metadata": existing["metadata"]} if "metadata" in existing else {}),
+        }
+        save(path, doc)
+        print(f"\n  {'updated' if existing else 'recorded'} '{args.name}' in "
+              f"{path.relative_to(REPO)}")
+        print(f"  aliases: {', '.join(aliases)}")
         return 0
 
     bx, by, byaw = believed()
