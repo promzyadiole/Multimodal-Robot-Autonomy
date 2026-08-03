@@ -59,7 +59,7 @@ PHRASINGS: dict[str, list[str]] = {
         "move to the kitchen now",
         "I need you in the kitchen",
         "navigate to kitchen",
-        "take yourself to the kitchen",
+        "take yourself to the cooking area",
     ],
     "parlour": [
         "go to the parlour",
@@ -67,8 +67,17 @@ PHRASINGS: dict[str, list[str]] = {
         "head to the lounge",
         "drive to the sitting room",
         "please go to the parlour",
-        "move to the living room",
+        "move to the living area",
         "navigate to the lounge",
+    ],
+    "waiting_area": [
+        "go to the waiting area",
+        "drive to the visitors waiting area",
+        "head to reception",
+        "please go to the lobby",
+        "take the robot to the waiting area",
+        "navigate to the visitors area",
+        "wait in the waiting area",
     ],
     "garage": [
         "go to the garage",
@@ -76,8 +85,8 @@ PHRASINGS: dict[str, list[str]] = {
         "please move to the garage",
         "head over to the garage",
         "navigate to the garage",
-        "take the robot to the garage",
-        "go park in the garage",
+        "take the robot to the car park",
+        "go park in the parking space",
         "could you go to the garage",
     ],
     "store_area": [
@@ -86,9 +95,9 @@ PHRASINGS: dict[str, list[str]] = {
         "drive to the store",
         "please go to the store area",
         "move to storage",
-        "navigate to the store area",
-        "go to the storage area",
-        "drive over to the store area",
+        "navigate to the storage area",
+        "go to the store room",
+        "drive over to the storeroom",
     ],
     "dining_room": [
         "go to the dining room",
@@ -96,7 +105,7 @@ PHRASINGS: dict[str, list[str]] = {
         "please drive to the dining room",
         "move to the dining room",
         "navigate to the dining area",
-        "take me to the dining room",
+        "take me to the dinner table",
         "go and wait in the dining room",
         "head for the dining area please",
     ],
@@ -105,8 +114,8 @@ PHRASINGS: dict[str, list[str]] = {
         "head to the bedroom",
         "please go to the master bedroom",
         "drive to the bedroom",
-        "navigate to the master bedroom",
-        "move to the master bedroom",
+        "navigate to the main bedroom",
+        "move to the master room",
         "go up to the master bedroom",
         "please make your way to the bedroom",
     ],
@@ -114,10 +123,10 @@ PHRASINGS: dict[str, list[str]] = {
         "go home",
         "return home",
         "head back home",
-        "please go to home",
+        "please go to home base",
         "navigate home",
-        "take the robot home",
-        "go back to home base",
+        "take the robot to the docking station",
+        "go back to base",
     ],
 }
 
@@ -160,9 +169,9 @@ def pose() -> tuple[float, float] | None:
 # The map frame and the world frame coincide in this environment (the place
 # registry was georeferenced onto the world), so no transform is needed.
 
-MAP_BOUNDS = (-10.27, 1.98, -5.28, 9.22)   # xmin xmax ymin ymax of custom_map
+MAP_BOUNDS = (-6.68, 7.17, -7.95, 3.65)    # xmin xmax ymin ymax of custom_map_v2
 RELOCALISE_ABOVE_M = 1.0            # belief-vs-truth error we refuse to start a trial with
-SPAWN = (-1.82, -1.0, 0.0)          # the launch spawn pose, used to recover an escape
+SPAWN = (-2.92, -3.43, 0.0)         # the launch spawn pose, used to recover an escape
 
 
 def truth() -> tuple[float, float, float] | None:
