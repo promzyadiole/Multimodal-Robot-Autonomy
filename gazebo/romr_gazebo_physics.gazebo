@@ -82,12 +82,6 @@
   <selfCollide>false</selfCollide>
 </gazebo>
 
-<gazebo reference="rearcaster_link">
-  <mu1>${caster_friction}</mu1>
-  <mu2>${caster_friction}</mu2>
-  <xacro:contact_params />
-  <selfCollide>false</selfCollide>
-</gazebo>
 
 <gazebo reference="casterwheel_link">
   <mu1>${caster_friction}</mu1>

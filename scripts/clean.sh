@@ -16,14 +16,22 @@ pkill -f "[s]lam_romr.launch.py"    2>/dev/null
 pkill -f "[t]eleop_twist_keyboard"  2>/dev/null
 pkill -f "[s]cripts/drive.py"       2>/dev/null
 sleep 3
-pkill -x gzserver gzclient robot_state_publisher 2>/dev/null
+# One pattern per pkill. "pkill -x a b c" does not kill a, b and c -- it takes
+# a single pattern and rejects the rest, which is how 22 robot_state_publishers
+# accumulated here, each publishing its own /robot_description and TF, and how a
+# stale robot model kept being spawned after the URDF had changed.
+for proc in gzserver gzclient robot_state_publisher; do
+  pkill -x "$proc" 2>/dev/null || true
+done
 pkill -f "[c]omponent_container_isolated" 2>/dev/null
 # slam_toolbox outlives its launch file and keeps publishing map->odom,
 # which silently fights AMCL the next time nav2 comes up.
 pkill -f "[a]sync_slam_toolbox_node" 2>/dev/null
 sleep 3
-pkill -9 -x gzserver 2>/dev/null
+for proc in gzserver gzclient robot_state_publisher; do
+  pkill -9 -x "$proc" 2>/dev/null || true
+done
 pkill -9 -f "[c]omponent_container_isolated" 2>/dev/null
 sleep 1
-left=$(pgrep -x gzserver; pgrep -x robot_state_publisher; pgrep -f "[c]omponent_container_isolated")
+left=$(pgrep -x gzserver; pgrep -x gzclient; pgrep -x robot_state_publisher; pgrep -f "[c]omponent_container_isolated"; pgrep -f "[a]sync_slam_toolbox_node")
 if [ -z "$left" ]; then echo "clean: nothing left running"; else echo "still up: $left"; fi
