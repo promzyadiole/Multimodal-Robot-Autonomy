@@ -33,8 +33,8 @@ from rclpy.node import Node
 
 # Deliberately slow. The robot cruises at 0.35 m/s and its casters are fixed
 # skids, so quick turns scrub instead of rolling; mapping wants gentle motion.
-LINEAR_START = 0.12
-ANGULAR_START = 0.4
+LINEAR_START = 0.08
+ANGULAR_START = 0.3
 LINEAR_MAX = 0.35
 ANGULAR_MAX = 1.2
 KEY_TIMEOUT = 0.25          # seconds a keypress keeps commanding
