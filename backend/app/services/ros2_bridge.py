@@ -205,11 +205,18 @@ class ROS2Bridge(Node):
         if not c:
             return {"known": False, "confident": None,
                     "reason": "no pose estimate published yet"}
+        # AMCL publishes /amcl_pose on update, not on a timer, so a parked robot
+        # legitimately has an old estimate: age is not evidence of a bad one.
+        # Treating it as such reported "not confident" for a stationary robot
+        # with a perfectly tight particle cloud, which in turn made the answer
+        # node refuse to confirm arrivals it should have confirmed. The
+        # covariance is the signal; age is reported alongside it, and only counts
+        # against confidence once it is old enough to mean AMCL has stopped.
         age = time.time() - c.get("at", 0.0)
-        stale = age > 10.0
+        stale = age > 120.0
         confident = bool(c["confident"]) and not stale
         if stale:
-            reason = f"last estimate is {age:.0f} s old"
+            reason = f"no pose update for {age:.0f} s -- has AMCL stopped?"
         elif c["confident"]:
             reason = "particle spread within limits"
         else:
