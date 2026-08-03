@@ -14,9 +14,21 @@ export REPO
 for v in $(env | grep -oE '^SNAP[A-Z_]*' || true); do unset "$v"; done
 unset GTK_PATH LD_LIBRARY_PATH GIO_MODULE_DIR 2>/dev/null || true
 
+# ROS's setup.bash reads variables it has not defined yet (AMENT_TRACE_SETUP_FILES
+# among them), so it cannot be sourced under `set -u`. The calling scripts use
+# `set -eu` deliberately, so relax both flags across the sourcing and restore
+# whatever the caller had.
+__had_u=0; case "$-" in *u*) __had_u=1 ;; esac
+__had_e=0; case "$-" in *e*) __had_e=1 ;; esac
+set +ue
+
 source /opt/ros/humble/setup.bash
 source ~/turtlebot3_ws/install/setup.bash
 source /usr/share/gazebo/setup.sh 2>/dev/null || true
+
+[ "$__had_u" = 1 ] && set -u
+[ "$__had_e" = 1 ] && set -e
+unset __had_u __had_e
 
 export CYCLONEDDS_URI="file://$REPO/config/cyclonedds.xml"
 export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
