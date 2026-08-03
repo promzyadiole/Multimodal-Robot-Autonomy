@@ -9,6 +9,12 @@ set -u
 pkill -f "[g]azebo_romr.launch.py"  2>/dev/null
 pkill -f "[n]av2_romr.launch.py"    2>/dev/null
 pkill -f "[s]lam_romr.launch.py"    2>/dev/null
+# teleop_twist_keyboard republishes its last twist in a loop, so a session left
+# open after a keypress drives the robot forever. Measured: a forgotten teleop
+# crept the robot 588 mm in 60 s with nobody touching the keyboard, which reads
+# exactly like a physics bug.
+pkill -f "[t]eleop_twist_keyboard"  2>/dev/null
+pkill -f "[s]cripts/drive.py"       2>/dev/null
 sleep 3
 pkill -x gzserver gzclient robot_state_publisher 2>/dev/null
 pkill -f "[c]omponent_container_isolated" 2>/dev/null
