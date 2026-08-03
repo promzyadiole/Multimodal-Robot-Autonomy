@@ -28,4 +28,4 @@ if [ -z "${DISPLAY:-}" ]; then
     [ -e "$sock" ] && export DISPLAY=":${sock##*/X}" && break
   done
 fi
-export DISPLAY="${DISPLAY:-:0}
+export DISPLAY="${DISPLAY:-:0}"
