@@ -87,8 +87,18 @@ def generate_launch_description():
             'world', default_value='new_world.world',
             description='world file in this package to map, e.g. new_world.world'),
         DeclareLaunchArgument('robot', default_value='romr'),
-        DeclareLaunchArgument('x_pose', default_value='-3.5'),
-        DeclareLaunchArgument('y_pose', default_value='1.0'),
+        # (-3.5, 1.0) was chosen for the AWS small house. In new_world the robot
+        # spawns wedged against geometry there: it reaches ~6% of commanded speed
+        # and yaws 10 deg on a straight command, which reads as a broken
+        # drivetrain. Backed out by hand it does 93-108%. This is the pose
+        # Open floor, chosen by measuring the map: 2.50 m clearance to the
+        # nearest wall and 6.31 m to the nearest world object. The old spawn
+        # (-2.0, -1.0) settles 0.69 m from wooden_case_1, against a 0.67 m
+        # contact threshold for this footprint -- the robot spawned touching the
+        # crate, facing it, and reached 6-11% of commanded speed while yawing
+        # 10-15 deg on a straight command. On open floor it does 99%.
+        DeclareLaunchArgument('x_pose', default_value='-4.27'),
+        DeclareLaunchArgument('y_pose', default_value='6.17'),
         DeclareLaunchArgument('z_pose', default_value='0.20'),
         gazebo_model_path,
         gazebo,

@@ -84,9 +84,14 @@ def generate_launch_description():
         DeclareLaunchArgument("world", default_value="new_world.world"),
         DeclareLaunchArgument("robot", default_value="romr"),
         # (-2.0, -1.0) is the spawn the original turtlebot3_new_world.launch.py
-        # used; it sits in 1.71 m of clearance on custom_map.
-        DeclareLaunchArgument("x_pose", default_value="-2.0"),
-        DeclareLaunchArgument("y_pose", default_value="-1.0"),
+        # Open floor, chosen by measuring the map: 2.50 m clearance to the
+        # nearest wall and 6.31 m to the nearest world object. The old spawn
+        # (-2.0, -1.0) settles 0.69 m from wooden_case_1, against a 0.67 m
+        # contact threshold for this footprint -- the robot spawned touching the
+        # crate, facing it, and reached 6-11% of commanded speed while yawing
+        # 10-15 deg on a straight command. On open floor it does 99%.
+        DeclareLaunchArgument("x_pose", default_value="-4.27"),
+        DeclareLaunchArgument("y_pose", default_value="6.17"),
         DeclareLaunchArgument("z_pose", default_value="0.20"),
         DeclareLaunchArgument("yaw", default_value="0.0"),
         gazebo_model_path,

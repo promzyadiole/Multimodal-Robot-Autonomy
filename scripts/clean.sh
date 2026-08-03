@@ -18,6 +18,9 @@ pkill -f "[s]cripts/drive.py"       2>/dev/null
 sleep 3
 pkill -x gzserver gzclient robot_state_publisher 2>/dev/null
 pkill -f "[c]omponent_container_isolated" 2>/dev/null
+# slam_toolbox outlives its launch file and keeps publishing map->odom,
+# which silently fights AMCL the next time nav2 comes up.
+pkill -f "[a]sync_slam_toolbox_node" 2>/dev/null
 sleep 3
 pkill -9 -x gzserver 2>/dev/null
 pkill -9 -f "[c]omponent_container_isolated" 2>/dev/null

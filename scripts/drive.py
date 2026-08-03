@@ -120,12 +120,23 @@ def main() -> int:
             rclpy.spin_once(node, timeout_sec=0.0)
     finally:
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
-        stop = Twist()
-        for _ in range(10):
-            node.pub.publish(stop)
-            rclpy.spin_once(node, timeout_sec=0.01)
-        node.destroy_node()
-        rclpy.shutdown()
+        # Publish the stop only while the context is still valid. Exiting after
+        # rclpy has shut down raised "publisher's context is invalid" and buried
+        # the real error under a second traceback.
+        try:
+            if rclpy.ok():
+                stop = Twist()
+                for _ in range(10):
+                    node.pub.publish(stop)
+                    rclpy.spin_once(node, timeout_sec=0.01)
+        except Exception:  # noqa: BLE001
+            pass
+        try:
+            node.destroy_node()
+            if rclpy.ok():
+                rclpy.shutdown()
+        except Exception:  # noqa: BLE001
+            pass
         print("\r\n  stopped.\r")
     return 0
 
