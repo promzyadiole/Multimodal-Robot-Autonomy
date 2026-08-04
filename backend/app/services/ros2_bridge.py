@@ -48,6 +48,8 @@ class ROS2Bridge(Node):
 
         self.current_nav_goal_handle = None
         self.current_waypoint_goal_handle = None
+        # Monotonic goal counter; see _open_goal().
+        self._goal_epoch = 0
 
         # Readiness probe. A node's graph info is only kept current for topics
         # it actually has an endpoint on: without this subscription
@@ -440,16 +442,34 @@ class ROS2Bridge(Node):
         pose.pose.orientation.w = qw
         return pose
 
+    def _open_goal(self) -> int:
+        """Start a new goal epoch and return its token.
+
+        Every outcome is tagged with the epoch that produced it, and a result
+        arriving for a superseded goal is dropped. Without this, dispatching
+        while a previous goal is still running lets that goal's cancellation
+        land in nav_outcome just after it was cleared, and the next caller
+        reads it as though it were its own result -- immediately, so a
+        navigation that never happened reports a verdict in a couple of
+        seconds. A 61-command run showed it plainly: one real trial, then 57
+        "aborted" with a median duration of 5.4 s, against real navigations
+        that take 20-90 s.
+        """
+        self._goal_epoch += 1
+        # Cleared before dispatch, never after: the previous goal's callback
+        # can fire between the two.
+        self.store.set("nav_outcome", None)
+        self.store.set("is_navigating", True)
+        return self._goal_epoch
+
     def navigate_to_pose(self, x: float, y: float, yaw: float) -> Dict[str, Any]:
         goal_msg = NavigateToPose.Goal()
         goal_msg.pose = self.create_pose_stamped(x, y, yaw)
 
+        epoch = self._open_goal()
         future = self.navigate_to_pose_client.send_goal_async(goal_msg)
-        future.add_done_callback(self._navigate_goal_response_callback)
-
-        # cleared here so a caller can wait for THIS goal's outcome
-        self.store.set("nav_outcome", None)
-        self.store.set("is_navigating", True)
+        future.add_done_callback(
+            lambda f, e=epoch: self._navigate_goal_response_callback(f, e))
         return {
             "success": True,
             "message": f"Navigation request sent to ({x}, {y}, yaw={yaw}).",
@@ -465,35 +485,48 @@ class ROS2Bridge(Node):
         goal_msg = NavigateToPose.Goal()
         goal_msg.pose = self.create_pose_stamped_quaternion(x, y, qz, qw)
 
+        epoch = self._open_goal()
         future = self.navigate_to_pose_client.send_goal_async(goal_msg)
-        future.add_done_callback(self._navigate_goal_response_callback)
-
-        self.store.set("is_navigating", True)
+        future.add_done_callback(
+            lambda f, e=epoch: self._navigate_goal_response_callback(f, e))
         return {
             "success": True,
             "message": f"Navigation request sent to ({x}, {y}, qz={qz}, qw={qw}).",
         }
 
-    def _navigate_goal_response_callback(self, future) -> None:
+    def _navigate_goal_response_callback(self, future, epoch: int = 0) -> None:
         try:
             goal_handle = future.result()
             if not goal_handle.accepted:
-                self.store.set("is_navigating", False)
+                if epoch == self._goal_epoch:
+                    self.store.set("is_navigating", False)
+                    self.store.set("nav_outcome", "rejected")
                 self.get_logger().warning("NavigateToPose goal rejected.")
                 return
 
             self.current_nav_goal_handle = goal_handle
             self.get_logger().info("NavigateToPose goal accepted.")
             result_future = goal_handle.get_result_async()
-            result_future.add_done_callback(self._navigate_result_callback)
+            result_future.add_done_callback(
+                lambda f, e=epoch: self._navigate_result_callback(f, e))
         except Exception as exc:
-            self.store.set("is_navigating", False)
+            if epoch == self._goal_epoch:
+                self.store.set("is_navigating", False)
             self.get_logger().error(f"NavigateToPose goal response error: {exc}")
 
-    def _navigate_result_callback(self, future) -> None:
+    def _navigate_result_callback(self, future, epoch: int = 0) -> None:
         try:
             result = future.result()
             status = result.status
+            # A result for a goal that has since been superseded says nothing
+            # about the goal now in flight, and must not be written where a
+            # caller is waiting for that one.
+            if epoch != self._goal_epoch:
+                self.get_logger().info(
+                    f"Ignoring result for superseded goal {epoch} "
+                    f"(current {self._goal_epoch}), status {status}."
+                )
+                return
             self.store.set("is_navigating", False)
 
             if status == GoalStatus.STATUS_SUCCEEDED:
@@ -511,8 +544,9 @@ class ROS2Bridge(Node):
                     f"NavigateToPose finished with status {status}."
                 )
         except Exception as exc:
-            self.store.set("is_navigating", False)
-            self.store.set("nav_outcome", "error")
+            if epoch == self._goal_epoch:
+                self.store.set("is_navigating", False)
+                self.store.set("nav_outcome", "error")
             self.get_logger().error(f"NavigateToPose result error: {exc}")
 
     def clear_costmaps(self, timeout_sec: float = 5.0) -> Dict[str, Any]:
