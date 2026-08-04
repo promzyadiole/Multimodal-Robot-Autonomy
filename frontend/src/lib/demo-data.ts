@@ -143,3 +143,28 @@ export const DEMO_VALIDATION = {
   median_true_error_m: 6.041,
   max_true_error_m: 15.664,
 };
+
+/**
+ * The channel inventory, mirroring backend/app/api/routes/system.py so the
+ * deployed build can describe the system without a robot behind it. The ROS
+ * legs are reported as unknown rather than live there -- see getChannels().
+ */
+export const DEMO_CHANNELS = {
+  channels: [
+    {"id": "chat.graph", "surface": "Chat", "label": "language command", "http": "POST /api/chat/graph-command", "service": "CommandGraph (LangGraph)", "ros": "navigate_to_pose (action)", "direction": "out", "note": "the full state machine: intent, dispatch, verify, recover"},
+    {"id": "chat.command", "surface": "Chat", "label": "question", "http": "POST /api/chat/command", "service": "IntentService + RAG", "ros": "—", "direction": "out", "note": "answered from state and the retrieval corpus, no motion"},
+    {"id": "nav.places", "surface": "Navigation", "label": "place registry", "http": "GET /api/navigation/places", "service": "YAMLRegistry", "ros": "—", "direction": "in", "note": "the recorded poses a goal can name"},
+    {"id": "nav.goto", "surface": "Navigation", "label": "go to place", "http": "POST /api/navigation/go-to/{place}", "service": "ROS2Bridge", "ros": "navigate_to_pose (action)", "direction": "out", "note": "dispatches without waiting; the outcome arrives on the action"},
+    {"id": "robot.status", "surface": "Dashboard", "label": "telemetry", "http": "GET /api/robot/status", "service": "StateStore", "ros": "/amcl_pose, /odom", "direction": "in", "note": "pose, velocity and the particle spread behind confidence"},
+    {"id": "robot.scan", "surface": "Dashboard", "label": "laser summary", "http": "GET /api/robot/scan-summary", "service": "ROS2Bridge", "ros": "/scan", "direction": "in", "note": "nearest return and its bearing"},
+    {"id": "robot.stop", "surface": "Control", "label": "stop", "http": "POST /api/robot/stop", "service": "ROS2Bridge", "ros": "/cmd_vel", "direction": "out", "note": "cancels the goal and publishes a zero twist"},
+    {"id": "vision.objects", "surface": "Vision", "label": "detected objects", "http": "GET /api/vision/objects-fast-annotated", "service": "SAM + OpenCLIP", "ros": "/camera/romr_camera/image_raw", "direction": "in", "note": "segment the frame, label each mask, annotate"},
+    {"id": "vision.scene", "surface": "Vision", "label": "scene summary", "http": "GET /api/vision/scene-summary-fast", "service": "VisionService", "ros": "/camera/romr_camera/image_raw", "direction": "in", "note": "the same detections phrased for the chat to speak"},
+    {"id": "loc.init", "surface": "Control", "label": "seed localisation", "http": "POST /api/localization/initialize", "service": "ROS2Bridge", "ros": "/initialpose", "direction": "out", "note": "AMCL publishes no map->odom until it is given a pose"},
+    {"id": "graph.shape", "surface": "Reasoning", "label": "graph shape", "http": "GET /api/chat/graph", "service": "CommandGraph", "ros": "—", "direction": "in", "note": "the node and edge inventory this page draws"},
+    {"id": "sys.environment", "surface": "All", "label": "environment", "http": "GET /api/system/environment", "service": "EnvironmentService", "ros": "—", "direction": "in", "note": "which world and map the registry is bound to"},
+  ],
+  surfaces: ["All", "Chat", "Control", "Dashboard", "Navigation", "Reasoning", "Vision"],
+  ros_available: false,
+  nav2_ready: false,
+};

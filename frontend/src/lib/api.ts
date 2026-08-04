@@ -1,5 +1,6 @@
 import {
-  DEMO_ENVIRONMENT, DEMO_GRAPH_SHAPE, DEMO_PLACES, DEMO_RUN, DEMO_STATUS,
+  DEMO_CHANNELS, DEMO_ENVIRONMENT, DEMO_GRAPH_SHAPE, DEMO_PLACES, DEMO_RUN,
+  DEMO_STATUS,
 } from "./demo-data";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8000";
@@ -306,6 +307,59 @@ export type GraphRunData = {
   pose?: Record<string, unknown>;
   [key: string]: unknown;
 };
+
+/** One route between an interface surface and the robot. */
+export type Channel = {
+  id: string;
+  /** which page in this interface opens the channel */
+  surface: string;
+  label: string;
+  http: string;
+  service: string;
+  /** the ROS topic, action or service on the far end; "—" when there is none */
+  ros: string;
+  /** out = the interface acts on the robot; in = the robot reports back */
+  direction: "in" | "out";
+  note: string;
+  /** true carrying traffic, false silent, null no ROS on this host at all */
+  live: boolean | null;
+};
+
+export type ChannelsData = {
+  channels: Channel[];
+  surfaces: string[];
+  ros_available: boolean;
+  nav2_ready: boolean;
+};
+
+/**
+ * The live channel inventory. Reported by the backend from what it has
+ * actually received rather than drawn here, so a channel that has gone
+ * silent says so instead of staying on a diagram that was true once.
+ */
+export async function getChannels(): Promise<ApiResponse<ChannelsData>> {
+  return liveOrRecorded(
+    async () => {
+      const res = await fetch(`${API_BASE}/api/system/channels`, {
+        cache: "no-store",
+      });
+      return handleResponse<ApiResponse<ChannelsData>>(res);
+    },
+    () => ({
+      success: true,
+      message: "recorded",
+      data: {
+        ...DEMO_CHANNELS,
+        // With no robot behind the deployment, the ROS legs are unknowable
+        // rather than dead, and are shown as such.
+        channels: DEMO_CHANNELS.channels.map((c) => ({
+          ...c,
+          live: c.ros === "—" ? true : null,
+        })),
+      } as ChannelsData,
+    }),
+  );
+}
 
 export async function getCommandGraph(): Promise<ApiResponse<CommandGraphData>> {
   return liveOrRecorded(

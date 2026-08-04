@@ -18,8 +18,11 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-[1600px]">
-      <aside className="w-64 shrink-0 border-r border-rule bg-panel">
+    // Below md the sidebar becomes a bar across the top rather than a column
+    // beside the content. At 390 px a fixed 16rem rail left the page 134 px to
+    // work in, which no amount of responsiveness inside the page can rescue.
+    <div className="mx-auto flex min-h-screen w-full max-w-[1600px] flex-col md:flex-row">
+      <aside className="w-full shrink-0 border-b border-rule bg-panel md:w-64 md:border-b-0 md:border-r">
         <Sidebar />
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">

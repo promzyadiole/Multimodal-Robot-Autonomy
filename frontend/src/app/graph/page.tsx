@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import ChannelMap from "@/components/channel-map";
 import Topbar from "@/components/topbar";
 import {
   getCommandGraph,
@@ -226,11 +227,16 @@ export default function GraphPage() {
         <section className="self-start rounded-sm border border-rule bg-panel p-4">
           {/* The diagram sits on its own inset surface. Drawing it straight onto
               the panel left the nodes almost the same value as their background;
-              and it is width-capped so it does not balloon on a wide display. */}
-          <div className="graph-canvas overflow-x-auto rounded-sm border border-rule bg-ground px-4 py-6">
+              and it is width-capped so it does not balloon on a wide display.
+
+              Below 40rem the SVG is replaced by the route list further down
+              rather than being scrolled. Scaling this viewBox to a phone puts
+              the node labels near 6px, and a diagram nobody can read is not
+              made readable by letting them drag it sideways. */}
+          <div className="graph-canvas hidden rounded-sm border border-rule bg-ground px-4 py-6 sm:block">
             <svg
               viewBox="0 0 640 520"
-              className="mx-auto h-auto w-full max-w-[760px] min-w-[560px]"
+              className="mx-auto h-auto w-full max-w-[760px]"
               role="img"
               aria-label="LangGraph command graph"
             >
@@ -358,6 +364,53 @@ export default function GraphPage() {
             </svg>
           </div>
 
+          {/* The narrow-screen equivalent of the diagram: the same nodes and the
+              same route, read top to bottom. It carries the branch conditions
+              too, so nothing in the graph is only available to a wide display. */}
+          <ol className="flex flex-col rounded-sm border border-rule bg-ground p-4 sm:hidden">
+            {(Object.keys(LAYOUT) as NodeId[]).map((id) => {
+              const n = LAYOUT[id];
+              const on = visited.has(id);
+              const times = path.filter((p) => p === id).length;
+              const order = path.indexOf(id);
+              return (
+                <li
+                  key={id}
+                  className={`border-l-2 py-2 pl-3 ${
+                    on ? "border-scan" : "border-rule"
+                  }`}
+                >
+                  <div className="flex items-baseline gap-2">
+                    <span
+                      className={`font-data text-[12.5px] ${
+                        on ? "text-ink" : "text-muted"
+                      }`}
+                    >
+                      {n.label}
+                    </span>
+                    {on ? (
+                      <span className="font-data text-[10px] text-scan tabular-nums">
+                        step {order + 1}
+                        {times > 1 ? ` · ran ${times}×` : ""}
+                      </span>
+                    ) : (
+                      <span className="font-data text-[10px] text-muted">
+                        not taken
+                      </span>
+                    )}
+                  </div>
+                  <p
+                    className={`text-[11px] leading-snug ${
+                      on ? "text-ink-soft" : "text-muted"
+                    }`}
+                  >
+                    {describes[id] ?? n.sub}
+                  </p>
+                </li>
+              );
+            })}
+          </ol>
+
           {path.length > 0 ? (
             <p className="mt-4 border-t border-rule pt-3 font-data text-[11px] leading-relaxed text-muted">
               route taken:{" "}
@@ -458,6 +511,13 @@ export default function GraphPage() {
             </dl>
           </div>
         </aside>
+      </div>
+
+      {/* The graph above is one command's route through the reasoning. This is
+          the system it runs inside: every path between an interface surface and
+          the robot, and whether each is currently carrying anything. */}
+      <div className="mt-6">
+        <ChannelMap />
       </div>
     </div>
   );
