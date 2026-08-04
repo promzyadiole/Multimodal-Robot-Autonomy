@@ -1,22 +1,41 @@
 amcl:
   ros__parameters:
     use_sim_time: true
-    # Odometry noise model, split by motion type because this robot's two
-    # motions are not equally trustworthy.
+    # Odometry noise model. These are measured, not guessed, and the
+    # measurement contradicted the obvious reasoning -- see below.
     #
-    # Straight-line odometry is genuinely excellent: 0.06% scale error
-    # measured over the world. Rotation is not. The casters are fixed, not
-    # swivelling, so turning drags them sideways across the floor and scrubs
-    # 180-220 mm per rotation. The wheel encoders never see that scrub, so
-    # reported yaw and actual yaw part company every time the robot turns.
+    # Rotation is the motion that wrecks localisation here. Seeding from
+    # ground truth and then turning gives, per step:
     #
-    # A flat 0.05 across all five told the filter that rotation was almost
-    # noise-free, so it refused to let the scan match pull yaw back. Errors
-    # accumulated through every nav2 recovery spin until the estimate was
-    # 166 deg out. alpha1 and alpha2 govern rotational noise and are now set
-    # to admit the scrub; alpha3-5 stay low because translation earns it.
-    alpha1: 0.25   # rotation noise from rotation  <- the scrubbing one
-    alpha2: 0.25   # rotation noise from translation
+    #   just seeded          err 0.014 m   yaw  -0.1 deg   sigma_yaw 0.128
+    #   8 s standing still   err 0.015 m   yaw  -0.1 deg   sigma_yaw 0.128
+    #   one 90 deg turn      err 0.159 m   yaw -17.4 deg   sigma_yaw 1.189
+    #
+    # One turn multiplies yaw sigma nine-fold; standing still and driving
+    # straight cost nothing, and translation actually pulls sigma back down.
+    #
+    # The tempting inference is that rotation is unreliable -- the casters
+    # are fixed rather than swivelling and scrub 180-220 mm per turn -- so
+    # alpha1 should be raised to admit it. That was tried at 0.25 and is
+    # exactly backwards. These alphas are variances on a noise term
+    # proportional to the rotation itself, so a large alpha1 makes each
+    # update spray particles across a wide arc, and the arc grows faster
+    # than one scan update can pull it back. Sweeping the value over a
+    # 90 deg turn, seeding from truth each time:
+    #
+    #   alpha1/2   pos err   yaw err   sigma_yaw
+    #     0.25     0.469 m    -13.3      1.257
+    #     0.10     0.279 m     -9.5      0.958
+    #     0.05     0.168 m     +1.0      0.694
+    #     0.02     0.108 m     -2.8      0.441
+    #     0.01     0.104 m     -1.8      0.364
+    #
+    # Monotonic, and flattening below 0.02. 0.02 is taken rather than 0.01
+    # to keep some genuine rotational noise in the model: the scrub is real,
+    # and a filter that believes its odometry perfectly has no way to accept
+    # a correction when it is finally wrong.
+    alpha1: 0.02   # rotation noise from rotation
+    alpha2: 0.02   # rotation noise from translation
     alpha3: 0.05   # translation noise from translation
     alpha4: 0.05   # translation noise from rotation
     alpha5: 0.05
@@ -35,30 +54,45 @@ amcl:
     update_min_d: 0.25
     update_min_a: 0.2
     resample_interval: 1
-    # Divergence recovery. Both default to 0.0, which disables it entirely:
-    # once the filter is wrong it has no mechanism to ever become right
-    # again, because every particle it resamples is drawn from the same bad
-    # cluster. That is what happened here -- a 5.55 m error that would have
-    # persisted for the rest of the session.
+    # Divergence recovery, deliberately OFF.
     #
-    # These two are exponential averages of the particle weights, one slow
-    # one fast. When the fast average drops well below the slow one, the
-    # scan has stopped matching where the filter is looking, and AMCL
-    # injects random particles elsewhere on the map so a correct hypothesis
-    # can be found. The cost is a little jitter in normal operation, which
-    # is worth paying to not be permanently lost.
-    recovery_alpha_slow: 0.001
-    recovery_alpha_fast: 0.1
+    # Enabling it (0.001 / 0.1, the values everyone quotes) made things
+    # markedly worse here. It scatters random particles across the map
+    # whenever the fast weight average dips below the slow one, and the
+    # pose AMCL reports is the mean over every particle, so the injected
+    # spread drags the estimate off a cluster that was perfectly good. The
+    # symptom is unmistakable: yaw sigma reached 2.53 rad, near-uniform
+    # over a full circle, while the robot sat 8.5 m from where AMCL said.
+    #
+    # The case for enabling it does not apply to this robot. Recovery earns
+    # its keep when a scan is ambiguous and the filter can genuinely back
+    # the wrong hypothesis. Measured against this map, a scan taken at the
+    # true pose puts 100% of beams within 20 cm of a wall and has one sharp
+    # global minimum -- mean error 0.047 m at the correct heading against
+    # 0.41-0.76 m at every 45 deg offset. There is no second hypothesis to
+    # find. If localisation is ever genuinely lost, re-seed it with
+    # scripts/seed.sh or RViz's 2D Pose Estimate.
+    recovery_alpha_slow: 0.0
+    recovery_alpha_fast: 0.0
     laser_min_range: 0.15
     # The scanner reaches 16 m and the building is 13.9 m across, so an 8 m
     # cutoff discarded exactly the long returns that pin position down along
     # a corridor. Match the sensor.
     laser_max_range: 16.0
-    max_beams: 60
-    z_hit: 0.5
+    # 720 beams are available; 60 was leaving the likelihood peak shallower
+    # than it needs to be for the cost.
+    max_beams: 120
+    # Measured trust in the scan. z_hit and z_rand are the weights on "this
+    # beam hit the wall the map predicts" against "this beam is noise", and
+    # a flat 0.5/0.5 says half of every scan is meaningless. Against this
+    # map it is not: 100% of beams at the true pose fall within 20 cm of a
+    # wall, mean 4.7 cm. Weighting the informative term properly sharpens
+    # the likelihood peak, so the filter both converges faster and holds on
+    # to the correct hypothesis under the odometry noise the alphas admit.
+    z_hit: 0.8
     z_short: 0.05
     z_max: 0.05
-    z_rand: 0.5
+    z_rand: 0.2
     sigma_hit: 0.2
     lambda_short: 0.1
 
@@ -237,8 +271,28 @@ local_costmap:
 
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0
-        inflation_radius: 0.45
+        # Cost decays as 252 * exp(-scaling * (clearance - inscribed_radius)),
+        # and is a flat 253 -- treated as an obstacle -- inside the inscribed
+        # radius of 0.229 m. Only that inner band blocks anything; the rest
+        # just makes routes expensive. What matters is how fast it decays.
+        #
+        # At 3.0 the decay was far too slow to sit under a 0.45 m radius: a
+        # spot with 0.30 m of clearance, which this robot passes through
+        # comfortably, cost 203 of a possible 253, and 0.40 m still cost 150.
+        # Nearly every corridor in the house was priced as almost-lethal, so
+        # the planner had no cheap route anywhere and DWB scored real
+        # trajectories against a gradient that never flattened out.
+        #
+        # Worse, cost fell from 130 straight to 0 at the 0.45 m edge -- a
+        # cliff in open floor that is not a real feature of the world.
+        #
+        # 6.0 with a wider 0.55 m radius is cheaper everywhere the robot
+        # actually drives (0.30 m -> 164, 0.40 m -> 90) while the band now
+        # comfortably covers the 0.422 m circumscribed radius, which is the
+        # distance nav2 needs to reason about collisions that depend on
+        # heading. The edge discontinuity drops from 130 to 36.
+        cost_scaling_factor: 6.0
+        inflation_radius: 0.55
 
       always_send_full_costmap: true
 
@@ -290,8 +344,28 @@ global_costmap:
 
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0
-        inflation_radius: 0.45
+        # Cost decays as 252 * exp(-scaling * (clearance - inscribed_radius)),
+        # and is a flat 253 -- treated as an obstacle -- inside the inscribed
+        # radius of 0.229 m. Only that inner band blocks anything; the rest
+        # just makes routes expensive. What matters is how fast it decays.
+        #
+        # At 3.0 the decay was far too slow to sit under a 0.45 m radius: a
+        # spot with 0.30 m of clearance, which this robot passes through
+        # comfortably, cost 203 of a possible 253, and 0.40 m still cost 150.
+        # Nearly every corridor in the house was priced as almost-lethal, so
+        # the planner had no cheap route anywhere and DWB scored real
+        # trajectories against a gradient that never flattened out.
+        #
+        # Worse, cost fell from 130 straight to 0 at the 0.45 m edge -- a
+        # cliff in open floor that is not a real feature of the world.
+        #
+        # 6.0 with a wider 0.55 m radius is cheaper everywhere the robot
+        # actually drives (0.30 m -> 164, 0.40 m -> 90) while the band now
+        # comfortably covers the 0.422 m circumscribed radius, which is the
+        # distance nav2 needs to reason about collisions that depend on
+        # heading. The edge discontinuity drops from 130 to 36.
+        cost_scaling_factor: 6.0
+        inflation_radius: 0.55
 
       always_send_full_costmap: true
 

@@ -130,9 +130,34 @@ def client_key(request: Request) -> str:
     return request.client.host if request.client else "unknown"
 
 
+# Addresses that are the operator's own machine. These limits exist so a public
+# demonstration cannot be made to run up a bill by a stranger; the person at the
+# console driving their own robot is not that threat, and 10 requests an hour
+# makes the command centre unusable for them -- a status poll, a place list and
+# a goal exhaust it in seconds, and the interface then reports the robot as
+# disconnected because every subsequent call is a 429.
+LOCAL_HOSTS = frozenset({"127.0.0.1", "::1", "localhost", "testclient"})
+
+
+def is_local(request: Request) -> bool:
+    """True when the caller is on this machine and reached us directly.
+
+    A forwarded header means a proxy is in front, and its contents are supplied
+    by whoever is on the far side, so a request carrying one is never treated as
+    local no matter what the socket says.
+    """
+    if request.headers.get("x-forwarded-for"):
+        return False
+    host = request.client.host if request.client else ""
+    return host in LOCAL_HOSTS
+
+
 async def guard(request: Request) -> None:
     """Applied as middleware to the costly paths."""
     if not is_costly(request.url.path):
+        return
+
+    if is_local(request):
         return
 
     if API_KEY:
@@ -177,4 +202,5 @@ def limits_status() -> dict:
         "daily_budget": DAILY_BUDGET_CALLS,
         "daily_budget_used": budget.used,
         "protected_paths": list(COSTLY_PREFIXES),
+        "exempt": "requests from this machine, arriving without a proxy header",
     }

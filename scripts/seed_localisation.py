@@ -43,6 +43,15 @@ def main() -> int:
 
     rclpy.init()
     node = rclpy.create_node("seed_localisation")
+    # Without this the node stamps messages from the wall clock while the rest
+    # of the system runs on simulation time, and AMCL answers with
+    #   "Failed to transform initial pose in time ... requested 1785828275.18
+    #    but the latest data is at 1514.31"
+    # -- a unix epoch against a simulation clock. AMCL then falls back to an
+    # identity odometry correction, which happens to be right only because the
+    # robot is stationary while being seeded.
+    node.set_parameters([rclpy.parameter.Parameter(
+        "use_sim_time", rclpy.Parameter.Type.BOOL, True)])
     pose_pub = node.create_publisher(PoseWithCovarianceStamped, "/initialpose", 10)
     vel_pub = node.create_publisher(Twist, "/cmd_vel", 10)
     time.sleep(1.5)
