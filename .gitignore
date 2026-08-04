@@ -67,3 +67,7 @@ thesis/
 # tf2_tools view_frames output
 frames_*.gv
 frames_*.pdf
+
+# Stray colcon trees. The real workspace is ~/turtlebot3_ws; see scripts/build.sh.
+install/
+log/
