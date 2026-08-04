@@ -75,15 +75,38 @@ class ROS2Bridge(Node):
 
         self.create_subscription(Odometry, "/odom", self._odom_callback, 10)
         self.create_subscription(LaserScan, "/scan", self._scan_callback, 10)
-        self.create_subscription(Image, "/camera/image_raw", self._image_callback, 10)
-        self.create_subscription(
-            CameraInfo, "/camera/camera_info", self._camera_info_callback, 10
-        )
+
+        # The Gazebo camera plugin publishes under its own name, so the frames
+        # arrive on /camera/romr_camera/image_raw. Subscribing to the shorter
+        # /camera/image_raw succeeds and then silently receives nothing -- ROS
+        # does not warn about a subscription with no publisher, so the vision
+        # page simply reported "no annotated image available" as though the
+        # detector had found nothing, rather than as though it had never been
+        # given a frame. Both names are taken: the plugin's is what this world
+        # produces, and the short one keeps working if the topic is remapped.
+        for topic in ("/camera/romr_camera/image_raw", "/camera/image_raw"):
+            self.create_subscription(Image, topic, self._image_callback, 10)
+        for topic in ("/camera/romr_camera/camera_info", "/camera/camera_info"):
+            self.create_subscription(
+                CameraInfo, topic, self._camera_info_callback, 10
+            )
 
         from geometry_msgs.msg import PoseWithCovarianceStamped
+        from rclpy.qos import (QoSDurabilityPolicy, QoSHistoryPolicy, QoSProfile,
+                               QoSReliabilityPolicy)
 
+        # AMCL latches its last pose, and only publishes again once the robot
+        # moves. Subscribing volatile means a backend restarted while the robot
+        # is parked receives nothing at all and reports "no pose estimate
+        # published yet" indefinitely, despite localisation being fine.
+        # Matching the publisher's durability delivers that last pose on
+        # connection.
         self.create_subscription(
-            PoseWithCovarianceStamped, "/amcl_pose", self._amcl_callback, 10
+            PoseWithCovarianceStamped, "/amcl_pose", self._amcl_callback,
+            QoSProfile(depth=1,
+                       durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+                       reliability=QoSReliabilityPolicy.RELIABLE,
+                       history=QoSHistoryPolicy.KEEP_LAST),
         )
 
         self.camera_info = None
@@ -205,18 +228,27 @@ class ROS2Bridge(Node):
         if not c:
             return {"known": False, "confident": None,
                     "reason": "no pose estimate published yet"}
-        # AMCL publishes /amcl_pose on update, not on a timer, so a parked robot
-        # legitimately has an old estimate: age is not evidence of a bad one.
-        # Treating it as such reported "not confident" for a stationary robot
-        # with a perfectly tight particle cloud, which in turn made the answer
-        # node refuse to confirm arrivals it should have confirmed. The
-        # covariance is the signal; age is reported alongside it, and only counts
-        # against confidence once it is old enough to mean AMCL has stopped.
+        # AMCL publishes /amcl_pose on update, not on a timer, and a particle
+        # filter only updates once the robot has moved past update_min_d. A
+        # parked robot therefore has an arbitrarily old estimate that is
+        # perfectly correct, so age on its own is not evidence of anything --
+        # a robot left alone for six minutes was being reported as not
+        # confident while its particle cloud sat at 0.09 rad, which made the
+        # answer node refuse to confirm arrivals it should have confirmed.
+        #
+        # What would be evidence is the robot having moved without AMCL
+        # saying anything about it. That is the condition tested here: stale
+        # means driving with no pose update, not merely time passing.
         age = time.time() - c.get("at", 0.0)
-        stale = age > 120.0
+        last_motion = self.store.get("last_motion_at") or 0.0
+        moved_since_update = last_motion - c.get("at", 0.0)
+        stale = moved_since_update > 15.0
         confident = bool(c["confident"]) and not stale
         if stale:
-            reason = f"no pose update for {age:.0f} s -- has AMCL stopped?"
+            reason = (
+                f"robot has been driving for {moved_since_update:.0f} s with no "
+                "pose update -- has AMCL stopped?"
+            )
         elif c["confident"]:
             reason = "particle spread within limits"
         else:
@@ -256,13 +288,22 @@ class ROS2Bridge(Node):
             frame_id=pose_data["frame_id"],
         )
 
+    # Below this the robot is standing still, not creeping. Measured drift on a
+    # parked robot is about 2 mm/min, well under this.
+    MOVING_LINEAR = 0.01
+    MOVING_ANGULAR = 0.02
+
     def _odom_callback(self, msg: Odometry) -> None:
+        lin = msg.twist.twist.linear.x
+        ang = msg.twist.twist.angular.z
+        moving = abs(lin) > self.MOVING_LINEAR or abs(ang) > self.MOVING_ANGULAR
+        if moving:
+            # Timestamped so localisation staleness can be judged against
+            # whether the robot has actually moved, rather than against a clock.
+            self.store.set("last_motion_at", time.time())
         self.store.set(
             "odom",
-            {
-                "linear_x": msg.twist.twist.linear.x,
-                "angular_z": msg.twist.twist.angular.z,
-            },
+            {"linear_x": lin, "angular_z": ang, "moving": moving},
         )
 
     def _scan_callback(self, msg: LaserScan) -> None:
@@ -302,10 +343,48 @@ class ROS2Bridge(Node):
         }
         self.store.set("scan", summary)
 
+    # Encodings this camera can emit, and how many bytes per pixel each uses.
+    # Anything outside this set falls back to cv_bridge.
+    _CHANNELS = {"rgb8": 3, "bgr8": 3, "rgba8": 4, "bgra8": 4, "mono8": 1}
+
+    @staticmethod
+    def _to_rgb8(msg: Image):
+        """Decode a ROS Image into an RGB8 array without going through cv_bridge.
+
+        cv_bridge is a C++ extension built against the NumPy that shipped with
+        the distribution, and this environment runs NumPy 2. Calling it raises
+        "Boost.Python.function object returned a result with an exception set",
+        which names neither NumPy nor the image, and arrives once per frame at
+        camera rate. The vision page then reports no objects in view -- the
+        detector is working perfectly and has simply never been handed a frame.
+
+        The message is a flat buffer with known width, height and encoding, so
+        the conversion is a reshape and at most a channel swap. Doing it here
+        removes the dependency rather than pinning the whole backend's NumPy to
+        satisfy one function.
+        """
+        n = ROS2Bridge._CHANNELS.get(msg.encoding)
+        if n is None:
+            return None
+        arr = np.frombuffer(msg.data, dtype=np.uint8)
+        # step is the row stride in bytes and may exceed width * n for padding.
+        expected = msg.height * msg.step
+        if arr.size < expected:
+            return None
+        arr = arr[:expected].reshape(msg.height, msg.step)[:, : msg.width * n]
+        arr = arr.reshape(msg.height, msg.width, n)
+        if msg.encoding == "mono8":
+            return np.repeat(arr, 3, axis=2)
+        if msg.encoding in ("bgr8", "bgra8"):
+            return arr[:, :, 2::-1] if n == 4 else arr[:, :, ::-1]
+        return arr[:, :, :3]
+
     def _image_callback(self, msg: Image) -> None:
         try:
-            image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="rgb8")
-            self.store.set("latest_image", image)
+            image = self._to_rgb8(msg)
+            if image is None:
+                image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="rgb8")
+            self.store.set("latest_image", np.ascontiguousarray(image))
             self.store.set(
                 "latest_image_meta",
                 {
