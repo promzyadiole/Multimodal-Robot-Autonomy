@@ -20,7 +20,7 @@ sleep 3
 # a single pattern and rejects the rest, which is how 22 robot_state_publishers
 # accumulated here, each publishing its own /robot_description and TF, and how a
 # stale robot model kept being spawned after the URDF had changed.
-for proc in gzserver gzclient robot_state_publisher; do
+for proc in gzserver gzclient robot_state_publisher rviz2; do
   pkill -x "$proc" 2>/dev/null || true
 done
 pkill -f "[c]omponent_container_isolated" 2>/dev/null
@@ -28,7 +28,7 @@ pkill -f "[c]omponent_container_isolated" 2>/dev/null
 # which silently fights AMCL the next time nav2 comes up.
 pkill -f "[a]sync_slam_toolbox_node" 2>/dev/null
 sleep 3
-for proc in gzserver gzclient robot_state_publisher; do
+for proc in gzserver gzclient robot_state_publisher rviz2; do
   pkill -9 -x "$proc" 2>/dev/null || true
 done
 pkill -9 -f "[c]omponent_container_isolated" 2>/dev/null
@@ -53,5 +53,5 @@ if [ "${1:-}" = "--all" ]; then
   done
 fi
 
-left=$(pgrep -x gzserver; pgrep -x gzclient; pgrep -x robot_state_publisher; pgrep -f "[c]omponent_container_isolated"; pgrep -f "[a]sync_slam_toolbox_node")
+left=$(pgrep -x gzserver; pgrep -x gzclient; pgrep -x robot_state_publisher; pgrep -x rviz2; pgrep -f "[c]omponent_container_isolated"; pgrep -f "[a]sync_slam_toolbox_node")
 if [ -z "$left" ]; then echo "clean: nothing left running"; else echo "still up: $left"; fi
