@@ -1,0 +1,7 @@
+# Retrieval store. Chroma is the default and keeps the index on disk, so a
+# result reproduces from this repository without an account or a network.
+chromadb>=1.0
+
+# Retained so RAG_STORE=pinecone still works and the two can be compared.
+# Optional: the backend runs without it unless that store is selected.
+# pinecone>=5.0

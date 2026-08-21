@@ -173,7 +173,7 @@ class RagService:
     def __init__(self, api_key: Optional[str] = None, index_name: Optional[str] = None) -> None:
         self.index_name = index_name or os.getenv("RAG_INDEX_NAME", "multimodal-robot-autonomy")
         self._openai_key = api_key or os.getenv("OPENAI_API_KEY")
-        self._pinecone_key = os.getenv("PINECONE_API_KEY")
+        self._store = None
         self.stats = RagStats()
         self._client = None
         self._index = None
@@ -208,25 +208,18 @@ class RagService:
         return self._client
 
     @property
-    def index(self):
-        if self._index is None:
-            from pinecone import Pinecone, ServerlessSpec
+    def store(self):
+        """The vector store, chosen by RAG_STORE and created on first use.
 
-            pc = Pinecone(api_key=self._pinecone_key)
-            existing = [i["name"] for i in pc.list_indexes()]
-            if self.index_name not in existing:
-                pc.create_index(
-                    name=self.index_name,
-                    dimension=EMBED_DIM,
-                    metric="cosine",
-                    spec=ServerlessSpec(cloud="aws", region="us-east-1"),
-                )
-                for _ in range(60):
-                    if pc.describe_index(self.index_name).status.get("ready"):
-                        break
-                    time.sleep(2)
-            self._index = pc.Index(self.index_name)
-        return self._index
+        Selected rather than hard-wired so the thesis can show the retrieval
+        result is a property of the embeddings and the corpus, not of the
+        vendor holding them.
+        """
+        if self._store is None:
+            from app.services.vector_store import make_store
+
+            self._store = make_store(self.index_name, EMBED_DIM)
+        return self._store
 
     # -- embedding, with the content-addressed cache
     def embed(self, texts: List[str]) -> List[List[float]]:
@@ -276,10 +269,10 @@ class RagService:
             }
             for c, v in zip(chunks, vectors)
         ]
-        for s in range(0, len(payload), 100):
-            self.index.upsert(vectors=payload[s : s + 100], namespace=namespace)
+        self.store.upsert(payload, namespace=namespace)
         return {
             "upserted": len(payload),
+            "store": self.store.kind,
             "embed_calls": self.stats.embed_calls,
             "cache_hits": self.stats.embed_cache_hits,
         }
@@ -320,11 +313,7 @@ class RagService:
         """Namespaces present in the index, cached after the first call."""
         if self._namespaces is None:
             try:
-                stats = self.index.describe_index_stats()
-                self._namespaces = sorted(
-                    ns for ns, v in (stats.get("namespaces") or {}).items()
-                    if (v.get("vector_count") or 0) > 0
-                )
+                self._namespaces = self.store.namespaces()
             except Exception:  # noqa: BLE001
                 self._namespaces = []
         return self._namespaces
@@ -333,13 +322,11 @@ class RagService:
                    timed: bool = True) -> List[Retrieved]:
         qv = self.embed([question])[0]
         t0 = time.time()
-        res = self.index.query(
-            vector=qv, top_k=top_k, include_metadata=True, namespace=namespace
-        )
+        matches = self.store.query(qv, top_k=top_k, namespace=namespace)
         if timed:
             self.stats.last_latency_ms["retrieve"] = (time.time() - t0) * 1000
         hits = []
-        for m in res.get("matches", []):
+        for m in matches:
             md = m.get("metadata") or {}
             page = md.get("page")
             hits.append(
@@ -415,7 +402,8 @@ class RagService:
             "stats": self.stats.__dict__,
         }
         try:
-            info["vectors"] = self.index.describe_index_stats().get("total_vector_count")
+            info["vectors"] = self.store.count()
+            info["store"] = self.store.kind
         except Exception as exc:  # noqa: BLE001
             info["vectors"] = f"unavailable: {exc}"
         return info

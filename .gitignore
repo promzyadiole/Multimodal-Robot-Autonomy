@@ -71,3 +71,7 @@ frames_*.pdf
 # Stray colcon trees. The real workspace is ~/turtlebot3_ws; see scripts/build.sh.
 install/
 log/
+
+# Local vector index and runtime trace log: both are regenerated, not source.
+/backend/app/data/chroma/
+/backend/app/data/traces/

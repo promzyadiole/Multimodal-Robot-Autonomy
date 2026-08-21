@@ -23,8 +23,11 @@ original /api/chat/command route still works exactly as before.
 
 from __future__ import annotations
 
+import json
 import os
 import time
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict, List, Optional, TypedDict
 
 from langgraph.graph import END, StateGraph
@@ -403,13 +406,38 @@ class CommandGraph:
         g.add_edge("answer", END)
         return g.compile()
 
+    # ---- trace persistence ---------------------------------------------
+    @staticmethod
+    def _persist(record: Dict[str, Any]) -> None:
+        """Append one run to a local JSONL log.
+
+        The graph already builds its own trace in _step(); LangSmith is a
+        viewer over data produced here, not the source of it. Writing that
+        trace to disk means the record survives independently of any external
+        service, so a result can be reproduced from the repository alone --
+        which is the same argument that moved the vector store on-disk.
+
+        Best-effort by design: a logging failure must never fail a command.
+        """
+        path = os.getenv("GRAPH_TRACE_LOG")
+        if not path:
+            path = str(Path(__file__).resolve().parents[2] / "data" / "traces"
+                       / "graph_runs.jsonl")
+        try:
+            f = Path(path)
+            f.parent.mkdir(parents=True, exist_ok=True)
+            with f.open("a") as fh:
+                fh.write(json.dumps(record, default=str) + "\n")
+        except Exception:  # noqa: BLE001
+            pass
+
     # ---- entry point ---------------------------------------------------
     def run(self, user_text: str) -> Dict[str, Any]:
         started = time.time()
         final = self._graph.invoke(
             {"user_text": user_text, "attempts": 0, "trail": [], "trace": [], "t0": started}
         )
-        return {
+        result = {
             "success": bool(final.get("success", True)),
             "answer": final.get("answer", ""),
             "intent": final.get("intent"),
@@ -426,6 +454,14 @@ class CommandGraph:
             "project": os.getenv("LANGSMITH_PROJECT"),
             "data": final.get("data", {}),
         }
+        self._persist({
+            "at": datetime.now(timezone.utc).isoformat(),
+            "command": user_text,
+            **{k: result[k] for k in
+               ("intent", "route", "place", "outcome", "attempts",
+                "path", "trace", "elapsed_ms", "success")},
+        })
+        return result
 
     @staticmethod
     def mermaid() -> str:
