@@ -158,6 +158,38 @@ def pose() -> tuple[float, float] | None:
     return (p["x"], p["y"]) if p else None
 
 
+def _r(v, nd: int = 4):
+    """Round when there is a number, keep the cell empty when there is not."""
+    return round(float(v), nd) if isinstance(v, (int, float)) else ""
+
+
+def belief() -> dict:
+    """Believed pose *and* the filter's own uncertainty, from one status read.
+
+    Recorded because the interesting question is not only how wrong the robot
+    was, but whether it knew. Ground truth is available here and is not
+    available on a real vehicle, so a self-assessment that predicts true error
+    is the signal that would have to carry the decision in deployment -- and
+    whether it does is a measurement, not an assumption.
+
+    Both halves come from a single call so that the pose and the covariance
+    describe the same instant. Two reads would let the robot move between them,
+    which is precisely the kind of small inconsistency that makes a
+    correlation impossible to interpret afterwards.
+    """
+    st = get("/api/robot/status")
+    p = st.get("current_pose") or {}
+    loc = st.get("localisation") or {}
+    return {
+        "xy": (p["x"], p["y"]) if p else None,
+        "sigma_x": loc.get("sigma_x"),
+        "sigma_y": loc.get("sigma_y"),
+        "sigma_yaw": loc.get("sigma_yaw"),
+        "position_sigma": loc.get("position_sigma"),
+        "confident": loc.get("confident"),
+    }
+
+
 # --- ground truth ------------------------------------------------------
 #
 # AMCL's estimate is the thing under test, so it cannot also be the ruler.
@@ -334,6 +366,8 @@ def main() -> int:
             rows.append({"n": i, "phrasing": text, "expected": expected, "resolved": "",
                          "correct": False, "outcome": f"error:{type(exc).__name__}",
                          "error_true_m": "", "error_amcl_m": "", "amcl_drift_m": "",
+                         "sigma_x": "", "sigma_y": "", "sigma_yaw": "",
+                         "position_sigma": "", "confident": "",
                          "reseeded": seeded, "seconds": round(time.time() - t0, 1)})
             print(f"{i:3}  {text[:34]:34} {'-':15} {'no':3} {'ERROR':10}")
             time.sleep(args.settle)
@@ -345,7 +379,8 @@ def main() -> int:
         correct = resolved == expected
 
         t_end = truth()
-        believed = pose()
+        b = belief()
+        believed = b["xy"]
         err_true = math.dist(t_end[:2], (gx, gy)) if (t_end and correct) else None
         err_amcl = math.dist(believed, (gx, gy)) if (believed and correct) else None
         drift = math.dist(believed, t_end[:2]) if (believed and t_end) else None
@@ -356,6 +391,15 @@ def main() -> int:
             "error_true_m": round(err_true, 3) if err_true is not None else "",
             "error_amcl_m": round(err_amcl, 3) if err_amcl is not None else "",
             "amcl_drift_m": round(drift, 3) if drift is not None else "",
+            # The filter's own account of how sure it is, at the moment the
+            # outcome was declared. Paired with error_true_m, these columns are
+            # what decide whether self-reported uncertainty is usable as a
+            # gate when no ground truth exists.
+            "sigma_x": _r(b["sigma_x"]),
+            "sigma_y": _r(b["sigma_y"]),
+            "sigma_yaw": _r(b["sigma_yaw"]),
+            "position_sigma": _r(b["position_sigma"]),
+            "confident": b["confident"],
             "reseeded": seeded,
             "seconds": round(time.time() - t0, 1),
         })
@@ -368,7 +412,15 @@ def main() -> int:
     loc.shutdown()
 
     with open(args.out, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+        # Union rather than rows[0]: an aborted trial writes a different set of
+        # keys, and taking the header from the first row silently drops columns
+        # for every row after it.
+        cols: list[str] = []
+        for r in rows:
+            for k in r:
+                if k not in cols:
+                    cols.append(k)
+        w = csv.DictWriter(f, fieldnames=cols, restval="")
         w.writeheader()
         w.writerows(rows)
 
@@ -407,6 +459,39 @@ def main() -> int:
             print(f"{name}  mean {s[0]:6.3f} m   median {s[1]:6.3f} m   max {s[2]:7.3f} m")
     print(f"re-localisations needed           {relocalisations}/{n}")
     print(f"robot found outside the map       {escapes}")
+
+    # --- does the robot know when it is wrong? --------------------------
+    #
+    # Ground truth decides arrival here, and on a real vehicle there is none.
+    # So the question that matters for deployment is whether the filter's own
+    # covariance separates the trials it got right from the ones it did not.
+    # If it does, that is a gate a robot could apply to itself; if it does
+    # not, no amount of downstream machinery can be built on it.
+    scored = [r for r in rows
+              if isinstance(r.get("error_true_m"), float)
+              and isinstance(r.get("position_sigma"), float)]
+    if scored:
+        good = [r for r in scored if r["error_true_m"] <= args.arrival_tol]
+        bad = [r for r in scored if r["error_true_m"] > args.arrival_tol]
+        med = lambda v: sorted(v)[len(v) // 2] if v else float("nan")  # noqa: E731
+        print("\nself-assessment vs reality        "
+              f"({len(scored)} trials with both recorded)")
+        if good:
+            print(f"  arrived      median position sigma {med([r['position_sigma'] for r in good]):.3f} m"
+                  f"   yaw sigma {med([r['sigma_yaw'] for r in good]):.3f} rad   n={len(good)}")
+        if bad:
+            print(f"  did not      median position sigma {med([r['position_sigma'] for r in bad]):.3f} m"
+                  f"   yaw sigma {med([r['sigma_yaw'] for r in bad]):.3f} rad   n={len(bad)}")
+        conf = [r for r in scored if r.get("confident") is True]
+        unconf = [r for r in scored if r.get("confident") is False]
+        if conf and unconf:
+            cg = sum(1 for r in conf if r["error_true_m"] <= args.arrival_tol)
+            ug = sum(1 for r in unconf if r["error_true_m"] <= args.arrival_tol)
+            print(f"  said confident     : {cg}/{len(conf)} actually arrived")
+            print(f"  said not confident : {ug}/{len(unconf)} actually arrived")
+        elif good and bad:
+            print("  (all trials fell on one side of the confidence threshold)")
+
     print(f"\nwritten to {args.out}")
     return 0
 
