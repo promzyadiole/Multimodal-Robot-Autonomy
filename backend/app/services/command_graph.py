@@ -421,7 +421,10 @@ class CommandGraph:
         """
         path = os.getenv("GRAPH_TRACE_LOG")
         if not path:
-            path = str(Path(__file__).resolve().parents[2] / "data" / "traces"
+            # parents[1] is backend/app, where rag_cache and places already
+            # live. parents[2] is backend/, which put the log outside the data
+            # directory and outside the ignore rule written for it.
+            path = str(Path(__file__).resolve().parents[1] / "data" / "traces"
                        / "graph_runs.jsonl")
         try:
             f = Path(path)
