@@ -75,3 +75,18 @@ log/
 # Local vector index and runtime trace log: both are regenerated, not source.
 /backend/app/data/chroma/
 /backend/app/data/traces/
+
+# LibreOffice lock files
+.~lock.*#
+
+# Thesis PDF and application slides: same class as thesis/ above, local only
+/ROMR_Thesis.pdf
+/ROMR_Portsmouth_Slides.pptx
+
+# Root-level figure sources. The served/served-from copies live under
+# docs/images/ and results/; these are the working originals.
+/ROMR.jpeg
+/ROMR1.jpeg
+/gazebo_world.png
+/robot_in_gazebo.png
+/lagra_system_architecture.png
