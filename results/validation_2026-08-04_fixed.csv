@@ -1,0 +1,62 @@
+n,phrasing,expected,resolved,correct,outcome,error_true_m,error_amcl_m,amcl_drift_m,reseeded,seconds
+1,please go to the parlour,parlour,parlour,True,succeeded,0.194,0.413,0.225,False,44.7
+2,go to the master bedroom,master_bedroom,master_bedroom,True,succeeded,0.333,0.325,0.657,False,149.4
+3,head to the lounge,parlour,parlour,True,succeeded,0.197,0.433,0.236,False,36.5
+4,please go to home base,home,home,True,timeout,0.287,0.231,0.217,False,184.8
+5,move to the master room,master_bedroom,master_bedroom,True,succeeded,0.457,0.303,0.494,False,95.5
+6,please make your way to the bedroom,master_bedroom,master_bedroom,True,succeeded,0.457,0.27,0.482,False,6.7
+7,go to the store area,store_area,store_area,True,succeeded,0.188,0.242,0.064,False,42.1
+8,drive to the visitors waiting area,waiting_area,waiting_area,True,timeout,0.19,0.243,0.06,False,185.0
+9,go to the kitchen,kitchen,kitchen,True,succeeded,0.224,0.234,0.043,False,29.1
+10,take the robot to the waiting area,waiting_area,waiting_area,True,timeout,0.143,0.238,0.096,False,185.1
+11,please move to the garage,garage,garage,True,timeout,0.252,0.25,0.387,False,167.4
+12,drive to the sitting room,parlour,parlour,True,succeeded,0.209,0.348,0.142,False,33.3
+13,go to the parlour,parlour,parlour,True,succeeded,0.209,0.348,0.141,False,3.7
+14,could you go to the garage,garage,garage,True,succeeded,0.183,0.245,0.33,False,115.4
+15,go back to base,home,home,True,timeout,0.222,0.272,0.053,False,184.9
+16,go home,home,home,True,succeeded,0.208,0.189,0.065,False,78.8
+17,wait in the waiting area,waiting_area,waiting_area,True,timeout,0.23,0.302,0.083,False,185.4
+18,please drive to the dining room,dining_room,dining_room,True,succeeded,0.207,0.238,0.052,False,28.7
+19,go to the garage,garage,garage,True,succeeded,0.152,0.256,0.367,False,148.9
+20,please go to the master bedroom,master_bedroom,master_bedroom,True,succeeded,0.398,0.266,0.543,False,113.4
+21,please go to the lobby,waiting_area,waiting_area,True,succeeded,0.253,0.249,0.02,False,71.8
+22,head to the storage,store_area,store_area,True,succeeded,0.153,0.392,0.239,False,34.9
+23,go park in the parking space,garage,garage,True,succeeded,0.328,0.421,0.126,False,80.0
+24,take me to the dinner table,dining_room,dining_room,True,succeeded,0.295,0.252,0.073,False,119.6
+25,head to the bedroom,master_bedroom,master_bedroom,True,succeeded,0.2,0.269,0.09,False,15.0
+26,take the robot to the docking station,home,home,True,succeeded,0.283,0.245,0.038,False,161.3
+27,navigate to the dining area,dining_room,dining_room,True,succeeded,0.211,0.253,0.085,False,42.8
+28,go to the dining room,dining_room,dining_room,True,succeeded,0.211,0.253,0.085,False,3.2
+29,head to reception,waiting_area,waiting_area,True,succeeded,0.238,0.239,0.025,False,24.7
+30,kitchen,kitchen,kitchen,True,succeeded,0.258,0.252,0.085,False,24.3
+31,head to the dining area,dining_room,dining_room,True,succeeded,0.162,0.201,0.076,False,47.2
+32,please go to the store area,store_area,store_area,True,succeeded,0.172,0.254,0.1,False,48.1
+33,navigate home,home,home,True,succeeded,0.279,0.379,0.102,False,16.1
+34,navigate to the main bedroom,master_bedroom,master_bedroom,True,succeeded,0.333,0.06,0.393,False,99.5
+35,navigate to the lounge,parlour,parlour,True,succeeded,0.213,0.515,0.302,False,37.5
+36,take yourself to the cooking area,kitchen,kitchen,True,succeeded,0.216,0.298,0.089,False,14.3
+37,go to the store room,store_area,store_area,True,succeeded,0.381,0.243,0.206,False,119.8
+38,drive to the bedroom,master_bedroom,master_bedroom,True,succeeded,0.3,0.143,0.431,False,121.8
+39,go and wait in the dining room,dining_room,dining_room,True,succeeded,0.419,0.235,0.237,False,165.5
+40,navigate to the storage area,store_area,store_area,True,succeeded,0.142,0.234,0.1,False,58.2
+41,head for the dining area please,dining_room,dining_room,True,succeeded,0.272,0.251,0.043,False,170.7
+42,go to the waiting area,waiting_area,waiting_area,True,succeeded,0.232,0.537,0.306,False,30.9
+43,return home,home,home,True,succeeded,0.342,0.318,0.036,False,57.2
+44,navigate to the garage,garage,garage,True,succeeded,0.48,0.237,0.462,False,101.9
+45,take the robot to the car park,garage,garage,True,succeeded,0.483,0.237,0.463,False,2.6
+46,I need you in the kitchen,kitchen,kitchen,True,succeeded,0.19,0.372,0.183,False,40.9
+47,please head to the kitchen,kitchen,kitchen,True,succeeded,0.19,0.372,0.182,False,3.6
+48,move to the living area,parlour,parlour,True,succeeded,0.296,0.24,0.061,False,73.2
+49,drive to the store,store_area,,False,dispatched,,,0.061,False,2.6
+50,head back home,home,home,True,timeout,0.298,0.284,0.064,False,184.8
+51,drive over to the storeroom,store_area,store_area,True,timeout,0.389,0.293,0.132,False,139.8
+52,drive into the garage,garage,garage,True,succeeded,0.309,0.336,0.083,False,21.6
+53,navigate to kitchen,kitchen,kitchen,True,succeeded,0.198,0.289,0.091,False,39.9
+54,move to storage,store_area,store_area,True,timeout,0.249,0.255,0.165,False,184.8
+55,go up to the master bedroom,master_bedroom,master_bedroom,True,succeeded,0.369,0.249,0.6,False,117.9
+56,move to the kitchen now,kitchen,kitchen,True,succeeded,0.244,0.266,0.092,False,50.2
+57,can you drive to the kitchen,kitchen,kitchen,True,succeeded,0.228,0.266,0.113,False,3.4
+58,move to the dining room,dining_room,dining_room,True,succeeded,0.21,0.252,0.075,False,44.4
+59,head over to the garage,garage,garage,True,succeeded,0.271,0.249,0.431,False,113.7
+60,go to the living room,parlour,parlour,True,succeeded,0.197,0.295,0.108,False,32.1
+61,navigate to the visitors area,waiting_area,waiting_area,True,timeout,0.117,0.232,0.12,False,185.2

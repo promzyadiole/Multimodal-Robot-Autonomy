@@ -28,13 +28,29 @@ drives a differential-drive robot there. Perception is open-vocabulary (SAM + CL
 the whole command policy is a LangGraph state machine whose every branch is recorded and
 traced in LangSmith.
 
-**The headline result is a negative one, and it is the point.** Across 54 natural-language
-commands, intent resolution was 54/54. But scoring arrival against Gazebo ground truth
-rather than the robot's own localisation estimate, the navigation stack *reported* success
-on 12 and had *actually* arrived on 3 — **10 of 12 reported successes were false**, with a
-median true error of 6.04 m. Measured the conventional way this system looks nearly four
-times better than it is. See [`validation_results_groundtruth.csv`](validation_results_groundtruth.csv)
+**The headline result is a negative one, and it is the point.** The suite recorded 54
+natural-language commands and resolved intent correctly on all of them. Auditing trial
+duration then showed that 38 of them had returned in seconds — too fast to have executed a
+navigation at all — so the honest denominator is the 16 that did. Scoring arrival against
+Gazebo ground truth rather than the robot's own localisation estimate, the navigation stack
+*reported* success on 12 of those and had *actually* arrived on 2: **83% of its reported
+successes were false**, with a median true error of 6.35 m across the valid trials and a
+maximum of 15.66 m. Measured the conventional way, this system looks several times better
+than it is. See [`validation_results_groundtruth.csv`](validation_results_groundtruth.csv)
 for the per-trial data and `scripts/plot_validation.py` for the figure.
+
+**And then it was fixed, and re-measured the same way.** The cause was localisation drift
+that no layer above the localiser could observe: the planner planned a valid path from a
+false start, the controller followed it competently, and the language layer described the
+arrival in correct English. Three particle-filter parameters were wrong — a
+`laser_max_range` of 8 m against a 16 m scanner, a rotational-noise coefficient an order of
+magnitude too large, and a 0.5/0.5 hit-versus-noise weighting — alongside a bookkeeping
+fault in which reported outcomes carried no goal identity. Re-running the identical
+protocol over 61 commands: **every measured trial arrived, 50 reported successes and 50
+real, no false positives**, median true error 0.231 m. Precision on the arrival claim went
+from 0.167 to 1.000. The residual defect now runs the other way — ten genuine arrivals
+timed out unconfirmed, which is the direction you want to fail in. Per-trial data in
+[`results/validation_2026-08-04_fixed.csv`](results/validation_2026-08-04_fixed.csv).
 
 <p align="center">
   <strong>A full-stack robotics framework for language-guided navigation, semantic localization, multimodal perception, and ROS 2 robot control through a modern web command center.</strong>
