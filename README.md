@@ -9,15 +9,23 @@
 </p>
 
 <p align="center">
-  <strong><a href="https://frontend-pas-projects-20244f71.vercel.app">▶ Live command centre</a></strong>
+  <strong><a href="recordings/romr_command_centre_demo.mp4">▶ Watch a four-minute run</a></strong>
   &nbsp;·&nbsp;
-  <em>replays a recorded run — no robot is connected to the public deployment</em>
+  <strong><a href="https://frontend-pas-projects-20244f71.vercel.app">Live command centre</a></strong>
+  &nbsp;·&nbsp;
+  <em>the public deployment replays a recorded run — no robot is connected to it</em>
 </p>
 
 <p align="center">
-  <em>A personal project. Builds on <a href="https://github.com/promzyadiole/Language-Vision-Grounded-Robot-Autonomy">Language-Vision-Grounded-Robot-Autonomy</a>, extending it to spawn and navigate a custom robot. That project has its own
-  <a href="https://promzyadiole.github.io/Language-Vision-Grounded-Robot-Autonomy/demo/">demo video</a>,
-  which shows the earlier system on a different robot and world — not the one documented here.</em>
+  <em>Typed commands send the robot to the kitchen, the dining room and the master bedroom
+  and then back to where it started, with the reasoning graph, the SAM + CLIP scene view,
+  Gazebo and RViz on screen throughout. Recorded on this system, in the world documented
+  here — not on the earlier one.</em>
+</p>
+
+<p align="center">
+  <em>A personal project. Builds on <a href="https://github.com/promzyadiole/Language-Vision-Grounded-Robot-Autonomy">Language-Vision-Grounded-Robot-Autonomy</a>,
+  extending it to spawn and navigate a custom robot.</em>
 </p>
 
 ---
@@ -359,7 +367,8 @@ The project includes a semantic small-house navigation configuration grounded fr
 
 | Asset | Path |
 |---|---|
-| Demo video | `docs/demo/videos/My_Robot_small_house_demo.mp4` |
+| Demo video — *earlier system, small-house world* | `docs/demo/videos/My_Robot_small_house_demo.mp4` |
+| Demo video — *this system, `new_world`* | `recordings/romr_command_centre_demo.mp4` |
 | Small-house navigation page preview | `docs/images/ui-navigation-page.png` |
 | Gazebo world preview | `docs/images/robot-gazebo-overview.png` |
 | RViz preview | `docs/images/robot-rviz-overview.png` |
