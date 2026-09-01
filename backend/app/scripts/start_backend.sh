@@ -21,6 +21,16 @@ set -e
 cd "$(dirname "$0")/../.."   # backend/
 
 # Same DDS domain as the sim; without this the bridge cannot see nav2 at all.
+#
+# RMW_IMPLEMENTATION has to be set here too, and setting CYCLONEDDS_URI alone is
+# not enough. scripts/env.sh puts the simulator, nav2 and RViz on CycloneDDS;
+# without the matching export this process falls back to Humble's default
+# rmw_fastrtps_cpp, and two different DDS vendors never discover each other.
+# The failure is quiet and misleading: /api/navigation/places still works
+# because it reads YAML, so the interface comes up looking healthy while
+# /api/robot/status reports "no pose estimate published yet" and nav2_ready
+# stays false with /amcl_pose publishing perfectly well the whole time.
+export RMW_IMPLEMENTATION=${RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}
 export CYCLONEDDS_URI=file:///home/promise/Multimodal-Robot-Autonomy/config/cyclonedds.xml
 export ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-42}
 export GAZEBO_MASTER_URI=${GAZEBO_MASTER_URI:-http://127.0.0.1:11345}
