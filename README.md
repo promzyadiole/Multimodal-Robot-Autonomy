@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <strong><a href="recordings/romr_command_centre_demo.mp4">▶ Watch a four-minute run</a></strong>
+  <strong><a href="https://promzyadiole.github.io/Multimodal-Robot-Autonomy/demo/">▶ Watch a four-minute run</a></strong>
   &nbsp;·&nbsp;
   <strong><a href="https://frontend-pas-projects-20244f71.vercel.app">Live command centre</a></strong>
   &nbsp;·&nbsp;
@@ -368,7 +368,7 @@ The project includes a semantic small-house navigation configuration grounded fr
 | Asset | Path |
 |---|---|
 | Demo video — *earlier system, small-house world* | `docs/demo/videos/My_Robot_small_house_demo.mp4` |
-| Demo video — *this system, `new_world`* | `recordings/romr_command_centre_demo.mp4` |
+| Demo video — *this system, `new_world`* | `docs/demo/videos/romr_command_centre_demo.mp4` |
 | Small-house navigation page preview | `docs/images/ui-navigation-page.png` |
 | Gazebo world preview | `docs/images/robot-gazebo-overview.png` |
 | RViz preview | `docs/images/robot-rviz-overview.png` |

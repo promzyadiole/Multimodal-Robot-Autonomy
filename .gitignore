@@ -95,5 +95,4 @@ Thesis format.jpeg
 # Screen recordings. Only the finished demo is versioned; the unedited master
 # and superseded takes stay local, because video never leaves git history once
 # committed and these are regenerable with scripts/record_screen.sh.
-recordings/*
-!recordings/romr_command_centre_demo.mp4
+recordings/
