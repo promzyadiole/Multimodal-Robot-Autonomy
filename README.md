@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <strong><a href="https://promzyadiole.github.io/Multimodal-Robot-Autonomy/demo/">▶ Watch a four-minute run</a></strong>
+  <strong><a href="https://promzyadiole.github.io/Multimodal-Robot-Autonomy/demo/">▶ Watch the robot run</a></strong>
   &nbsp;·&nbsp;
   <strong><a href="https://frontend-pas-projects-20244f71.vercel.app">Live command centre</a></strong>
   &nbsp;·&nbsp;
@@ -17,10 +17,11 @@
 </p>
 
 <p align="center">
-  <em>Typed commands send the robot to the kitchen, the dining room and the master bedroom
-  and then back to where it started, with the reasoning graph, the SAM + CLIP scene view,
-  Gazebo and RViz on screen throughout. Recorded on this system, in the world documented
-  here — not on the earlier one.</em>
+  <em>Typed commands send the robot to the kitchen, then the master bedroom, then back to
+  where it started, with the reasoning graph, Gazebo and RViz on screen throughout.
+  Recorded on this system, in the world documented here. Every command, answer and
+  arrival plays at real speed; the stretches where the robot is only covering ground
+  are shown at 3&times;.</em>
 </p>
 
 <p align="center">
