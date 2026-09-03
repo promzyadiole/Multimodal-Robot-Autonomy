@@ -1020,7 +1020,7 @@ It draws inspiration from ecosystems and ideas around:
 
 ## 👤 Author
 
-**Promzy Adiole**
+**Promise Adiole**
 
 Built as part of a broader research and engineering effort in language-grounded robot autonomy, combining robotics, multimodal AI, web systems, and human-robot interaction.
 

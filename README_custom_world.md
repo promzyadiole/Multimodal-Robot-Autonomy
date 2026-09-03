@@ -1073,7 +1073,7 @@ It draws inspiration from work in:
 
 ## 👤 Author
 
-**Promzy Adiole**
+**Promise Adiole**
 
 Built as part of a broader research and engineering effort in language-grounded robot autonomy, combining robotics, web systems, multimodal AI, and human-robot interaction.
 
