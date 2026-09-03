@@ -221,9 +221,32 @@ export async function getVisionObjectsFastAnnotated(): Promise<ApiResponse> {
   }, "object detection — it needs the camera and the SAM/CLIP models");
 }
 
+/** Key under which the last utterance a human actually typed is remembered.
+ *  The backend's state store keeps the parsed intent (NAVIGATE_TO_PLACE), not
+ *  the words, so the reasoning view has no other way to show which goal the
+ *  displayed run belongs to. */
+export const LAST_UTTERANCE_KEY = "romr.lastUtterance";
+
+export function rememberUtterance(command: string): void {
+  try {
+    window.localStorage.setItem(LAST_UTTERANCE_KEY, command);
+  } catch {
+    /* private windows and blocked site data throw; the default still works */
+  }
+}
+
+export function recallUtterance(): string {
+  try {
+    return window.localStorage.getItem(LAST_UTTERANCE_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
 export async function sendChatCommand(
   command: string
 ): Promise<ApiResponse<ChatCommandResponseData>> {
+  rememberUtterance(command);
   return liveOrExplain(async () => {
     const res = await fetch(`${API_BASE}/api/chat/command`, {
       method: "POST",

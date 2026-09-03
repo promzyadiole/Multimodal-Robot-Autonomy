@@ -8,6 +8,8 @@ import {
   isUsingRecording,
   onDataSourceChange,
   sendGraphCommand,
+  rememberUtterance,
+  recallUtterance,
   type CommandGraphData,
   type GraphRunData,
 } from "@/lib/api";
@@ -117,7 +119,11 @@ function traversedEdges(path: string[]): Set<string> {
 
 export default function GraphPage() {
   const [shape, setShape] = useState<CommandGraphData | null>(null);
-  const [command, setCommand] = useState<string>("go to the garage");
+  // Seeded from the last thing a human actually typed rather than a fixed
+  // example: showing "go to the garage" while the operator had asked for the
+  // kitchen made the traced route look unrelated to the command that produced
+  // it. Falls back to an example only when nothing has been asked yet.
+  const [command, setCommand] = useState<string>("go to the kitchen");
   const [run, setRun] = useState<GraphRunData | null>(null);
   const [busy, setBusy] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
@@ -130,6 +136,8 @@ export default function GraphPage() {
     getCommandGraph()
       .then((r) => setShape(r.data ?? null))
       .catch(() => setShape(null));
+    const asked = recallUtterance();
+    if (asked) setCommand(asked);
     setRecorded(isUsingRecording());
     return onDataSourceChange(setRecorded);
   }, []);
@@ -150,6 +158,7 @@ export default function GraphPage() {
     setError("");
     setRun(null);
     try {
+      rememberUtterance(command.trim());
       const res = await sendGraphCommand(command.trim());
       setRun(res.data ?? null);
     } catch (e) {
