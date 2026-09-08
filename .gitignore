@@ -97,6 +97,5 @@ Thesis format.jpeg
 # committed and these are regenerable with scripts/record_screen.sh.
 recordings/
 
-# Unpublished co-authored manuscript. Lives with the project it reports on,
-# but is not distributed: the co-authors have not agreed to publication.
+# Manuscript sources. Kept beside the project they describe, built locally.
 paper/
