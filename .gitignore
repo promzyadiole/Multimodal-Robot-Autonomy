@@ -97,5 +97,9 @@ Thesis format.jpeg
 # committed and these are regenerable with scripts/record_screen.sh.
 recordings/
 
-# Manuscript sources. Kept beside the project they describe, built locally.
+# Manuscript sources. Out of this branch until the supervisor's review is
+# finished, because anything committed here becomes public on push. The full
+# history, including the platform-provenance corrections, is committed on the
+# local branch private-paper-do-not-push and mirrored to a bundle; merge it
+# here once the paper is cleared for release.
 paper/
